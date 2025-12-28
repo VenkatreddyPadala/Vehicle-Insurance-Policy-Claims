@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Policy Management System</title>
+    <style>
+        /* Minimal Professional UI */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+        }
+
+        .header {
+            background: #000;
+            color: white;
+            padding: 24px 60px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.6;
+            font-weight: 400;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 50px;
+        }
+
+        .tab {
+            padding: 20px 30px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.15s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: #000;
+        }
+
+        .tab.active {
+            color: #000;
+            border-bottom-color: #000;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 50px 60px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-section {
+            background: white;
+            padding: 0;
+            margin-bottom: 50px;
+        }
+
+        .form-section h3 {
+            color: #000;
+            margin-bottom: 30px;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #000;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 14px 16px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.15s;
+            font-family: inherit;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #000;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-right: 12px;
+        }
+
+        .btn-primary {
+            background: #000;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #333;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #000;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        .btn-danger {
+            background: #000;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-success {
+            background: #000;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2e7d32;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 0;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .table-container h3 {
+            padding: 24px 28px;
+            margin: 0;
+            color: #000;
+            font-size: 20px;
+            font-weight: 600;
+            border-bottom: 1px solid #e0e0e0;
+            letter-spacing: -0.3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #fafafa;
+        }
+
+        th {
+            padding: 16px 28px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 20px 28px;
+            font-size: 14px;
+            color: #000;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.1s;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-active {
+            background: #000;
+            color: white;
+        }
+
+        .badge-expired {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .badge-submitted {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-approved {
+            background: #000;
+            color: white;
+        }
+
+        .badge-rejected {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.15s;
+            background: white;
+            color: #000;
+        }
+
+        .action-btn:hover {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #000;
+            color: white;
+        }
+
+        .alert-error {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 40px 32px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.15s;
+        }
+
+        .stat-card:hover {
+            border-color: #000;
+        }
+
+        .stat-card h3 {
+            font-size: 48px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #000;
+            letter-spacing: -2px;
+        }
+
+        .stat-card p {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 24px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .tabs {
+                padding: 0 16px;
+                overflow-x: auto;
+            }
+
+            .content {
+                padding: 32px 24px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Insurance Policy Management System</h1>
+        <p>Manage Customers, Vehicles, Policies & Claims</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="tab" onclick="switchTab('customers')">Customers</button>
+        <button class="tab" onclick="switchTab('vehicles')">Vehicles</button>
+        <button class="tab" onclick="switchTab('policies')">Policies</button>
+        <button class="tab" onclick="switchTab('claims')">Claims</button>
+    </div>
+
+    <div class="content">
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Dashboard Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="totalCustomers">0</h3>
+                    <p>Total Customers</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="totalVehicles">0</h3>
+                    <p>Total Vehicles</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="activePolicies">0</h3>
+                    <p>Active Policies</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="pendingClaims">0</h3>
+                    <p>Pending Claims</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers Tab -->
+        <div id="customers" class="tab-content">
+            <div id="customerAlert"></div>
+
+            <div class="form-section">
+                <h3>Add New Customer</h3>
+                <form id="customerForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Name *</label>
+                            <input type="text" id="customerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="customerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone *</label>
+                            <input type="tel" id="customerPhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Address *</label>
+                            <textarea id="customerAddress" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Customer</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetCustomerForm()">Reset</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <h3>All Customers</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                    <tr><td colspan="6" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vehicles Tab -->
+        <div id="vehicles" class="tab-content">
+            <div id="vehicleAlert"></div>
+
+            <div class="form-section">
+                <h3>Add New Vehicle</h3>
+                <form id="vehicleForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Customer *</label>
+                            <select id="vehicleCustomerId" required>
+                                <option value="">Select Customer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Registration Number *</label>
+                            <input type="text" id="vehicleRegNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Make *</label>
+                            <input type="text" id="vehicleMake" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Model *</label>
+                            <input type="text" id="vehicleModel" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Year of Manufacture *</label>
+                            <input type="number" id="vehicleYear" min="1900" max="2025" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Vehicle Type *</label>
+                            <select id="vehicleType" required>
+                                <option value="">Select Type</option>
+                                <option value="CAR">Car</option>
+                                <option value="BIKE">Bike</option>
+                                <option value="TRUCK">Truck</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Vehicle</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetVehicleForm()">Reset</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <h3>All Vehicles</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Registration</th>
+                        <th>Make</th>
+                        <th>Model</th>
+                        <th>Year</th>
+                        <th>Type</th>
+                        <th>Customer</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBody">
+                    <tr><td colspan="8" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Policies Tab -->
+        <div id="policies" class="tab-content">
+            <div id="policyAlert"></div>
+
+            <div class="form-section">
+                <h3>Create New Policy</h3>
+                <form id="policyForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vehicle *</label>
+                            <select id="policyVehicleId" required>
+                                <option value="">Select Vehicle</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Policy Number *</label>
+                            <input type="text" id="policyNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Coverage Amount *</label>
+                            <input type="number" id="policyCoverage" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Start Date *</label>
+                            <input type="date" id="policyStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date *</label>
+                            <input type="date" id="policyEndDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Policy</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetPolicyForm()">Reset</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <h3>All Policies</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Policy #</th>
+                        <th>Vehicle</th>
+                        <th>Coverage</th>
+                        <th>Premium</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="policiesTableBody">
+                    <tr><td colspan="8" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Claims Tab -->
+        <div id="claims" class="tab-content">
+            <div id="claimAlert"></div>
+
+            <div class="form-section">
+                <h3>File New Claim</h3>
+                <form id="claimForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Policy *</label>
+                            <select id="claimPolicyId" required>
+                                <option value="">Select Policy</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Amount *</label>
+                            <input type="number" id="claimAmount" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Date *</label>
+                            <input type="date" id="claimDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Reason *</label>
+                            <textarea id="claimReason" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">File Claim</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetClaimForm()">Reset</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <h3>All Claims</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Policy #</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="claimsTableBody">
+                    <tr><td colspan="7" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://localhost:8099';
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+});
+
+// Switch between tabs
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById(tabName).classList.add('active');
+
+    if (tabName === 'dashboard') loadDashboard();
+    if (tabName === 'customers') loadCustomers();
+    if (tabName === 'vehicles') { loadVehicles(); loadCustomerDropdown(); }
+    if (tabName === 'policies') { loadPolicies(); loadVehicleDropdown(); }
+    if (tabName === 'claims') { loadClaims(); loadPolicyDropdown(); }
+}
+
+// Show alert messages
+function showAlert(elementId, message, type) {
+    const alertDiv = document.getElementById(elementId);
+    alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    setTimeout(() => alertDiv.innerHTML = '', 5000);
+}
+
+// =========================
+// DASHBOARD
+// =========================
+async function loadDashboard() {
+    try {
+        const [customers, vehicles, policies, claims] = await Promise.all([
+            fetch(`${API_BASE_URL}/customers/all`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/vehicles/all`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/policies/active`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/claims/pending`).then(r => r.json())
+        ]);
+
+        document.getElementById('totalCustomers').textContent = customers.length;
+        document.getElementById('totalVehicles').textContent = vehicles.length;
+        document.getElementById('activePolicies').textContent = policies.length;
+        document.getElementById('pendingClaims').textContent = claims.length;
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+// =========================
+// CUSTOMERS
+// =========================
+async function loadCustomers() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/customers/all`);
+        const customers = await response.json();
+
+        const tbody = document.getElementById('customersTableBody');
+        if (customers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No customers found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = customers.map(customer => `
+            <tr>
+                <td>${customer.customerId}</td>
+                <td>${customer.name}</td>
+                <td>${customer.email}</td>
+                <td>${customer.phone}</td>
+                <td>${customer.address}</td>
+                <td class="action-buttons">
+                    <button class="action-btn btn-danger" onclick="deleteCustomer(${customer.customerId})">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading customers:', error);
+        document.getElementById('customersTableBody').innerHTML = '<tr><td colspan="6">Error loading customers</td></tr>';
+    }
+}
+
+document.getElementById('customerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const customer = {
+        name: document.getElementById('customerName').value,
+        email: document.getElementById('customerEmail').value,
+        phone: document.getElementById('customerPhone').value,
+        address: document.getElementById('customerAddress').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/customers/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(customer)
+        });
+
+        if (response.ok) {
+            showAlert('customerAlert', 'Customer added successfully!', 'success');
+            resetCustomerForm();
+            loadCustomers();
+            loadDashboard();
+        } else {
+            const error = await response.text();
+            showAlert('customerAlert', 'Failed to add customer: ' + error, 'error');
+        }
+    } catch (error) {
+        showAlert('customerAlert', 'Error: ' + error.message, 'error');
+    }
+});
+
+async function deleteCustomer(id) {
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/customers/delete/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showAlert('customerAlert', 'Customer deleted successfully!', 'success');
+            loadCustomers();
+            loadDashboard();
+        } else {
+            showAlert('customerAlert', 'Failed to delete customer!', 'error');
+        }
+    } catch (error) {
+        showAlert('customerAlert', 'Error: ' + error.message, 'error');
+    }
+}
+
+function resetCustomerForm() {
+    document.getElementById('customerForm').reset();
+}
+
+// =========================
+// VEHICLES
+// =========================
+async function loadCustomerDropdown() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/customers/all`);
+        const customers = await response.json();
+
+        const select = document.getElementById('vehicleCustomerId');
+        select.innerHTML = '<option value="">Select Customer</option>' +
+            customers.map(c => `<option value="${c.customerId}">${c.name} (${c.email})</option>`).join('');
+    } catch (error) {
+        console.error('Error loading customers:', error);
+    }
+}
+
+async function loadVehicles() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/vehicles/all`);
+        const vehicles = await response.json();
+
+        const tbody = document.getElementById('vehiclesTableBody');
+        if (vehicles.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No vehicles found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = vehicles.map(vehicle => `
+            <tr>
+                <td>${vehicle.vehicleId}</td>
+                <td>${vehicle.registrationNumber}</td>
+                <td>${vehicle.make}</td>
+                <td>${vehicle.model}</td>
+                <td>${vehicle.yearOfManufacture}</td>
+                <td>${vehicle.vehicleType}</td>
+                <td>${vehicle.customer?.name || 'N/A'}</td>
+                <td class="action-buttons">
+                    <button class="action-btn btn-danger" onclick="deleteVehicle(${vehicle.vehicleId})">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
+        document.getElementById('vehiclesTableBody').innerHTML = '<tr><td colspan="8">Error loading vehicles</td></tr>';
+    }
+}
+
+document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const customerId = document.getElementById('vehicleCustomerId').value;
+    const vehicle = {
+        registrationNumber: document.getElementById('vehicleRegNumber').value,
+        make: document.getElementById('vehicleMake').value,
+        model: document.getElementById('vehicleModel').value,
+        yearOfManufacture: parseInt(document.getElementById('vehicleYear').value),
+        vehicleType: document.getElementById('vehicleType').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/vehicles/add/${customerId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vehicle)
+        });
+
+        if (response.ok) {
+            showAlert('vehicleAlert', 'Vehicle added successfully!', 'success');
+            resetVehicleForm();
+            loadVehicles();
+            loadDashboard();
+        } else {
+            const error = await response.text();
+            showAlert('vehicleAlert', 'Failed to add vehicle: ' + error, 'error');
+        }
+    } catch (error) {
+        showAlert('vehicleAlert', 'Error: ' + error.message, 'error');
+    }
+});
+
+async function deleteVehicle(id) {
+    if (!confirm('Are you sure you want to delete this vehicle?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/vehicles/delete/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showAlert('vehicleAlert', 'Vehicle deleted successfully!', 'success');
+            loadVehicles();
+            loadDashboard();
+        } else {
+            showAlert('vehicleAlert', 'Failed to delete vehicle!', 'error');
+        }
+    } catch (error) {
+        showAlert('vehicleAlert', 'Error: ' + error.message, 'error');
+    }
+}
+
+function resetVehicleForm() {
+    document.getElementById('vehicleForm').reset();
+}
+
+// =========================
+// POLICIES
+// =========================
+async function loadVehicleDropdown() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/vehicles/all`);
+        const vehicles = await response.json();
+
+        const select = document.getElementById('policyVehicleId');
+        select.innerHTML = '<option value="">Select Vehicle</option>' +
+            vehicles.map(v => `<option value="${v.vehicleId}">${v.registrationNumber} - ${v.make} ${v.model}</option>`).join('');
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
+    }
+}
+
+async function loadPolicies() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/policies/all`);
+        const policies = await response.json();
+
+        const tbody = document.getElementById('policiesTableBody');
+        if (policies.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No policies found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = policies.map(policy => `
+            <tr>
+                <td>${policy.policyId}</td>
+                <td>${policy.policyNumber}</td>
+                <td>${policy.vehicle?.registrationNumber || 'N/A'}</td>
+                <td>₹${policy.coverageAmount?.toLocaleString()}</td>
+                <td>₹${policy.premiumAmount?.toLocaleString()}</td>
+                <td>${policy.startDate}</td>
+                <td>${policy.endDate}</td>
+                <td><span class="badge badge-${policy.policyStatus.toLowerCase()}">${policy.policyStatus}</span></td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading policies:', error);
+        document.getElementById('policiesTableBody').innerHTML = '<tr><td colspan="8">Error loading policies</td></tr>';
+    }
+}
+
+document.getElementById('policyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const vehicleId = document.getElementById('policyVehicleId').value;
+    const policy = {
+        policyNumber: document.getElementById('policyNumber').value,
+        coverageAmount: parseFloat(document.getElementById('policyCoverage').value),
+        startDate: document.getElementById('policyStartDate').value,
+        endDate: document.getElementById('policyEndDate').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/policies/create/${vehicleId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(policy)
+        });
+
+        if (response.ok) {
+            showAlert('policyAlert', 'Policy created successfully!', 'success');
+            resetPolicyForm();
+            loadPolicies();
+            loadDashboard();
+        } else {
+            const error = await response.text();
+            showAlert('policyAlert', 'Failed to create policy: ' + error, 'error');
+        }
+    } catch (error) {
+        showAlert('policyAlert', 'Error: ' + error.message, 'error');
+    }
+});
+
+function resetPolicyForm() {
+    document.getElementById('policyForm').reset();
+}
+
+// =========================
+// CLAIMS
+// =========================
+async function loadPolicyDropdown() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/policies/active`);
+        const policies = await response.json();
+
+        const select = document.getElementById('claimPolicyId');
+        select.innerHTML = '<option value="">Select Policy</option>' +
+            policies.map(p => `<option value="${p.policyId}">${p.policyNumber} - ${p.vehicle?.registrationNumber}</option>`).join('');
+    } catch (error) {
+        console.error('Error loading policies:', error);
+    }
+}
+
+async function loadClaims() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/claims/all`);
+        const claims = await response.json();
+
+        const tbody = document.getElementById('claimsTableBody');
+        if (claims.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No claims found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = claims.map(claim => `
+            <tr>
+                <td>${claim.claimId}</td>
+                <td>${claim.policy?.policyNumber || 'N/A'}</td>
+                <td>₹${claim.claimAmount?.toLocaleString()}</td>
+                <td>${claim.claimDate}</td>
+                <td>${claim.claimReason}</td>
+                <td><span class="badge badge-${claim.claimStatus.toLowerCase()}">${claim.claimStatus}</span></td>
+                <td class="action-buttons">
+                    ${claim.claimStatus === 'SUBMITTED' ? `
+                        <button class="action-btn btn-success" onclick="processClaim(${claim.claimId}, 'APPROVED')">Approve</button>
+                        <button class="action-btn btn-danger" onclick="processClaim(${claim.claimId}, 'REJECTED')">Reject</button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading claims:', error);
+        document.getElementById('claimsTableBody').innerHTML = '<tr><td colspan="7">Error loading claims</td></tr>';
+    }
+}
+
+document.getElementById('claimForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const policyId = document.getElementById('claimPolicyId').value;
+    const claim = {
+        claimAmount: parseFloat(document.getElementById('claimAmount').value),
+        claimDate: document.getElementById('claimDate').value,
+        claimReason: document.getElementById('claimReason').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/claims/file/${policyId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(claim)
+        });
+
+        if (response.ok) {
+            showAlert('claimAlert', 'Claim filed successfully!', 'success');
+            resetClaimForm();
+            loadClaims();
+            loadDashboard();
+        } else {
+            const error = await response.text();
+            showAlert('claimAlert', 'Failed to file claim: ' + error, 'error');
+        }
+    } catch (error) {
+        showAlert('claimAlert', 'Error: ' + error.message, 'error');
+    }
+});
+
+async function processClaim(claimId, status) {
+    if (!confirm(`Are you sure you want to ${status.toLowerCase()} this claim?`)) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/claims/process/${claimId}?status=${status}`, {
+            method: 'PUT'
+        });
+
+        if (response.ok) {
+            showAlert('claimAlert', `Claim ${status.toLowerCase()} successfully!`, 'success');
+            loadClaims();
+            loadDashboard();
+        } else {
+            showAlert('claimAlert', `Failed to ${status.toLowerCase()} claim!`, 'error');
+        }
+    } catch (error) {
+        showAlert('claimAlert', 'Error: ' + error.message, 'error');
+    }
+}
+
+function resetClaimForm() {
+    document.getElementById('claimForm').reset();
+}
+</script>
+</body>
+</html>
