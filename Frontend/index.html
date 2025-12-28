@@ -429,6 +429,10 @@
                     <p>Active Policies</p>
                 </div>
                 <div class="stat-card">
+                    <h3 id="expiredPolicies">0</h3>
+                    <p>Expired Policies</p>
+                </div>
+                <div class="stat-card">
                     <h3 id="pendingClaims">0</h3>
                     <p>Pending Claims</p>
                 </div>
@@ -704,12 +708,14 @@ async function loadDashboard() {
             fetch(`${API_BASE_URL}/customers/all`).then(r => r.json()),
             fetch(`${API_BASE_URL}/vehicles/all`).then(r => r.json()),
             fetch(`${API_BASE_URL}/policies/active`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/policies/expired`).then(r => r.json()),
             fetch(`${API_BASE_URL}/claims/pending`).then(r => r.json())
         ]);
 
         document.getElementById('totalCustomers').textContent = customers.length;
         document.getElementById('totalVehicles').textContent = vehicles.length;
         document.getElementById('activePolicies').textContent = policies.length;
+        document.getElementById('expiredPolicies').textContent = policies.length;
         document.getElementById('pendingClaims').textContent = claims.length;
     } catch (error) {
         console.error('Error loading dashboard:', error);
