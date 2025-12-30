@@ -5,9 +5,11 @@ import com.Policy.DB.model.*;
 import com.Policy.DB.repository.*;
 import com.Policy.DB.util.PolicyNumberGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,7 +36,15 @@ public class ApprovalService {
     @Autowired
     private PolicyService policyService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    // Configure ObjectMapper with JavaTimeModule in constructor
+    public ApprovalService() {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
+    }
+
+    // Rest of your code remains the same...
 
     // Submit vehicle registration request
     public ApprovalRequest submitVehicleRequest(Integer customerId, VehicleRequestDTO vehicleRequest) {
@@ -177,8 +187,8 @@ public class ApprovalService {
             policy.setPolicyNumber(policyNumber);
 
             policy.setCoverageAmount(policyData.getCoverageAmount());
-            policy.setStartDate(policyData.getStartDate());
-            policy.setEndDate(policyData.getEndDate());
+            policy.setStartDate(LocalDate.parse(policyData.getStartDate()));
+            policy.setEndDate(LocalDate.parse(policyData.getEndDate()));
             policy.setPolicyStatus(PolicyStatus.ACTIVE);
 
             // Calculate premium using existing logic
