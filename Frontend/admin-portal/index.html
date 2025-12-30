@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insurance Policy Management System</title>
     <style>
-        /* Minimal Professional UI */
-
         * {
             margin: 0;
             padding: 0;
@@ -170,21 +168,21 @@
         }
 
         .btn-danger {
-            background: #000;
+            background: #d32f2f;
             color: white;
         }
 
         .btn-danger:hover {
-            background: #d32f2f;
+            background: #b71c1c;
         }
 
         .btn-success {
-            background: #000;
+            background: #2e7d32;
             color: white;
         }
 
         .btn-success:hover {
-            background: #2e7d32;
+            background: #1b5e20;
         }
 
         .table-container {
@@ -260,6 +258,11 @@
         .badge-expired {
             background: #f5f5f5;
             color: #666;
+        }
+
+        .badge-pending {
+            background: #fff3e0;
+            color: #e65100;
         }
 
         .badge-submitted {
@@ -359,6 +362,71 @@
             font-size: 13px;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 0;
+            max-width: 700px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 32px 40px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000;
+            letter-spacing: -0.3px;
+        }
+
+        .close-btn {
+            font-size: 28px;
+            color: #666;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            padding: 40px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            justify-content: flex-end;
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 20px 24px;
@@ -408,6 +476,7 @@
         <button class="tab" onclick="switchTab('customers')">Customers</button>
         <button class="tab" onclick="switchTab('vehicles')">Vehicles</button>
         <button class="tab" onclick="switchTab('policies')">Policies</button>
+        <button class="tab" onclick="switchTab('approvals')">Approvals</button>
         <button class="tab" onclick="switchTab('claims')">Claims</button>
     </div>
 
@@ -431,6 +500,10 @@
                 <div class="stat-card">
                     <h3 id="expiredPolicies">0</h3>
                     <p>Expired Policies</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="pendingApprovals">0</h3>
+                    <p>Pending Approvals</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="pendingClaims">0</h3>
@@ -614,6 +687,31 @@
             </div>
         </div>
 
+        <!-- Approvals Tab -->
+        <div id="approvals" class="tab-content">
+            <div id="approvalAlert"></div>
+
+            <div class="table-container">
+                <h3>Pending Approval Requests</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Type</th>
+                        <th>Details</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="approvalsTableBody">
+                    <tr><td colspan="7" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Claims Tab -->
         <div id="claims" class="tab-content">
             <div id="claimAlert"></div>
@@ -669,8 +767,27 @@
     </div>
 </div>
 
+<!-- Review Request Modal -->
+<div id="reviewRequestModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Review Approval Request</h3>
+            <span class="close-btn" onclick="closeReviewModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="requestDetails"></div>
+            <div class="modal-actions" id="modalActions">
+                <button class="btn btn-success" onclick="processRequest(currentRequestId, 'APPROVED')">Approve</button>
+                <button class="btn btn-danger" onclick="processRequest(currentRequestId, 'REJECTED')">Reject</button>
+                <button class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const API_BASE_URL = 'http://localhost:8099';
+let currentRequestId = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -689,6 +806,7 @@ function switchTab(tabName) {
     if (tabName === 'customers') loadCustomers();
     if (tabName === 'vehicles') { loadVehicles(); loadCustomerDropdown(); }
     if (tabName === 'policies') { loadPolicies(); loadVehicleDropdown(); }
+    if (tabName === 'approvals') loadApprovals();
     if (tabName === 'claims') { loadClaims(); loadPolicyDropdown(); }
 }
 
@@ -704,19 +822,21 @@ function showAlert(elementId, message, type) {
 // =========================
 async function loadDashboard() {
     try {
-        const [customers, vehicles, policies, claims] = await Promise.all([
+        const [customers, vehicles, activePolicies, expiredPolicies, pendingClaims, pendingApprovals] = await Promise.all([
             fetch(`${API_BASE_URL}/customers/all`).then(r => r.json()),
             fetch(`${API_BASE_URL}/vehicles/all`).then(r => r.json()),
             fetch(`${API_BASE_URL}/policies/active`).then(r => r.json()),
             fetch(`${API_BASE_URL}/policies/expired`).then(r => r.json()),
-            fetch(`${API_BASE_URL}/claims/pending`).then(r => r.json())
+            fetch(`${API_BASE_URL}/claims/pending`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/approvals/pending`).then(r => r.json()).catch(() => [])
         ]);
 
         document.getElementById('totalCustomers').textContent = customers.length;
         document.getElementById('totalVehicles').textContent = vehicles.length;
-        document.getElementById('activePolicies').textContent = policies.length;
-        document.getElementById('expiredPolicies').textContent = policies.length;
-        document.getElementById('pendingClaims').textContent = claims.length;
+        document.getElementById('activePolicies').textContent = activePolicies.length;
+        document.getElementById('expiredPolicies').textContent = expiredPolicies.length;
+        document.getElementById('pendingClaims').textContent = pendingClaims.length;
+        document.getElementById('pendingApprovals').textContent = pendingApprovals.length;
     } catch (error) {
         console.error('Error loading dashboard:', error);
     }
@@ -744,7 +864,7 @@ async function loadCustomers() {
                 <td>${customer.phone}</td>
                 <td>${customer.address}</td>
                 <td class="action-buttons">
-                    <button class="action-btn btn-danger" onclick="deleteCustomer(${customer.customerId})">Delete</button>
+                    <button class="action-btn" onclick="deleteCustomer(${customer.customerId})">Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -846,7 +966,7 @@ async function loadVehicles() {
                 <td>${vehicle.vehicleType}</td>
                 <td>${vehicle.customer?.name || 'N/A'}</td>
                 <td class="action-buttons">
-                    <button class="action-btn btn-danger" onclick="deleteVehicle(${vehicle.vehicleId})">Delete</button>
+                    <button class="action-btn" onclick="deleteVehicle(${vehicle.vehicleId})">Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -992,6 +1112,176 @@ document.getElementById('policyForm').addEventListener('submit', async (e) => {
 
 function resetPolicyForm() {
     document.getElementById('policyForm').reset();
+}
+
+// =========================
+// APPROVALS
+// =========================
+async function loadApprovals() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/all`);
+        const requests = await response.json();
+
+        const tbody = document.getElementById('approvalsTableBody');
+
+        if (requests.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No approval requests</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = requests.map(request => {
+            const data = JSON.parse(request.requestData);
+            const typeIcon = request.requestType === 'VEHICLE_REGISTRATION' ? '🚗' : '📋';
+
+            let details = '';
+            if (request.requestType === 'VEHICLE_REGISTRATION') {
+                details = `${data.registrationNumber} - ${data.make} ${data.model}`;
+            } else {
+                details = `Vehicle #${data.vehicleId} - ₹${data.coverageAmount.toLocaleString()}`;
+            }
+
+            return `
+                <tr>
+                    <td>${request.requestId}</td>
+                    <td>${request.customerName}</td>
+                    <td>${typeIcon} ${request.requestType.replace('_', ' ')}</td>
+                    <td>${details}</td>
+                    <td>${new Date(request.createdAt).toLocaleString()}</td>
+                    <td><span class="badge badge-${request.status.toLowerCase()}">${request.status}</span></td>
+                    <td class="action-buttons">
+                        ${request.status === 'PENDING' ? `
+                            <button class="action-btn" onclick="viewRequestDetails(${request.requestId})">Review</button>
+                        ` : `
+                            <button class="action-btn" onclick="viewRequestDetails(${request.requestId})">View</button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading approvals:', error);
+        document.getElementById('approvalsTableBody').innerHTML = '<tr><td colspan="7">Error loading approvals</td></tr>';
+    }
+}
+
+// View Request Details Modal
+async function viewRequestDetails(requestId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/all`);
+        const requests = await response.json();
+        const request = requests.find(r => r.requestId === requestId);
+
+        if (!request) {
+            alert('Request not found');
+            return;
+        }
+
+        currentRequestId = requestId;
+        const data = JSON.parse(request.requestData);
+        const modal = document.getElementById('reviewRequestModal');
+        const detailsDiv = document.getElementById('requestDetails');
+
+        let detailsHTML = `
+            <div style="margin-bottom: 20px;">
+                <strong>Request ID:</strong> ${request.requestId}<br>
+                <strong>Customer:</strong> ${request.customerName} (${request.customerEmail})<br>
+                <strong>Type:</strong> ${request.requestType.replace('_', ' ')}<br>
+                <strong>Status:</strong> <span class="badge badge-${request.status.toLowerCase()}">${request.status}</span><br>
+                <strong>Submitted:</strong> ${new Date(request.createdAt).toLocaleString()}<br>
+            </div>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 15px;">Request Details:</h4>
+        `;
+
+        if (request.requestType === 'VEHICLE_REGISTRATION') {
+            detailsHTML += `
+                <p><strong>Registration Number:</strong> ${data.registrationNumber}</p>
+                <p><strong>Make:</strong> ${data.make}</p>
+                <p><strong>Model:</strong> ${data.model}</p>
+                <p><strong>Year:</strong> ${data.yearOfManufacture}</p>
+                <p><strong>Type:</strong> ${data.vehicleType}</p>
+            `;
+        } else {
+            detailsHTML += `
+                <p><strong>Vehicle ID:</strong> ${data.vehicleId}</p>
+                <p><strong>Coverage Amount:</strong> ₹${data.coverageAmount.toLocaleString()}</p>
+                <p><strong>Start Date:</strong> ${data.startDate}</p>
+                <p><strong>End Date:</strong> ${data.endDate}</p>
+            `;
+        }
+
+        detailsHTML += `</div>`;
+
+        if (request.status !== 'PENDING') {
+            detailsHTML += `
+                <div style="background: #f0f0f0; padding: 15px; border-radius: 10px;">
+                    <strong>Processed:</strong> ${new Date(request.processedAt).toLocaleString()}<br>
+                    <strong>Processed By:</strong> ${request.processedBy}<br>
+                    ${request.adminComments ? `<strong>Comments:</strong> ${request.adminComments}` : ''}
+                </div>
+            `;
+        }
+
+        detailsDiv.innerHTML = detailsHTML;
+
+        // Show/hide action buttons based on status
+        const actionsDiv = document.getElementById('modalActions');
+        if (request.status === 'PENDING') {
+            actionsDiv.style.display = 'flex';
+        } else {
+            actionsDiv.style.display = 'none';
+        }
+
+        modal.classList.add('active');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load request details');
+    }
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewRequestModal').classList.remove('active');
+    currentRequestId = null;
+}
+
+// Process Request (Approve/Reject)
+async function processRequest(requestId, status) {
+    const comments = prompt(`Enter ${status === 'APPROVED' ? 'approval' : 'rejection'} comments (optional):`);
+
+    if (comments === null) return; // User clicked cancel
+
+    const adminUsername = prompt('Enter your admin username:');
+    if (!adminUsername) {
+        alert('Admin username is required');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/process/${requestId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Username': adminUsername
+            },
+            body: JSON.stringify({
+                status: status,
+                adminComments: comments || ''
+            })
+        });
+
+        if (response.ok) {
+            const statusText = status === 'APPROVED' ? 'approved' : 'rejected';
+            showAlert('approvalAlert', `Request ${statusText} successfully!`, 'success');
+            closeReviewModal();
+            loadApprovals();
+            loadDashboard();
+        } else {
+            const error = await response.json();
+            showAlert('approvalAlert', 'Failed: ' + error.error, 'error');
+        }
+    } catch (error) {
+        showAlert('approvalAlert', 'Error: ' + error.message, 'error');
+    }
 }
 
 // =========================
