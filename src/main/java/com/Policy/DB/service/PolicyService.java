@@ -42,7 +42,7 @@ public class PolicyService {
     }
 
     // Calculate premium based on vehicle type, age, and coverage
-    private BigDecimal calculatePremium(Vehicle vehicle, BigDecimal coverageAmount) {
+    public BigDecimal calculatePremium(Vehicle vehicle, BigDecimal coverageAmount) {
         BigDecimal basePremium = BigDecimal.ZERO;
 
         // Base premium by vehicle type
