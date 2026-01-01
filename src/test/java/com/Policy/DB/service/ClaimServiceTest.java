@@ -123,4 +123,92 @@ class ClaimServiceTest {
 
         assertEquals(1, claims.size());
     }
+    @Test
+    void fileClaim_policyExpired() {
+        Policy policy = new Policy();
+        policy.setPolicyStatus(PolicyStatus.EXPIRED);
+        policy.setCoverageAmount(BigDecimal.valueOf(50000));
+
+        Claim claim = new Claim();
+        claim.setClaimAmount(BigDecimal.valueOf(10000));
+
+        when(policyRepository.findById(1)).thenReturn(Optional.of(policy));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.fileClaim(claim, 1));
+
+        assertEquals("Cannot file claim for expired policy", ex.getMessage());
+    }
+
+    @Test
+    void fileClaim_amountExceedsCoverage() {
+        Policy policy = new Policy();
+        policy.setPolicyStatus(PolicyStatus.ACTIVE);
+        policy.setCoverageAmount(BigDecimal.valueOf(10000));
+
+        Claim claim = new Claim();
+        claim.setClaimAmount(BigDecimal.valueOf(50000));
+
+        when(policyRepository.findById(1)).thenReturn(Optional.of(policy));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.fileClaim(claim, 1));
+
+        assertEquals("Claim amount exceeds coverage amount", ex.getMessage());
+    }
+    @Test
+    void fileClaim_policyNotFound() {
+        when(policyRepository.findById(1)).thenReturn(Optional.empty());
+
+        Claim claim = new Claim();
+        claim.setClaimAmount(BigDecimal.valueOf(1000));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.fileClaim(claim, 1));
+
+        assertTrue(ex.getMessage().contains("Policy not found"));
+    }
+    @Test
+    void processClaim_alreadyProcessed() {
+        Claim claim = new Claim();
+        claim.setClaimStatus(ClaimStatus.APPROVED);
+
+        when(claimRepository.findById(1)).thenReturn(Optional.of(claim));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.processClaim(1, ClaimStatus.REJECTED));
+
+        assertEquals("Claim has already been processed", ex.getMessage());
+    }
+    @Test
+    void processClaim_invalidStatus() {
+        Claim claim = new Claim();
+        claim.setClaimStatus(ClaimStatus.SUBMITTED);
+
+        when(claimRepository.findById(1)).thenReturn(Optional.of(claim));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.processClaim(1, ClaimStatus.SUBMITTED));
+
+        assertEquals("Invalid claim status. Must be APPROVED or REJECTED", ex.getMessage());
+    }
+    @Test
+    void processClaim_claimNotFound() {
+        when(claimRepository.findById(1)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.processClaim(1, ClaimStatus.APPROVED));
+
+        assertTrue(ex.getMessage().contains("Claim not found"));
+    }
+    @Test
+    void getClaimStatus_notFound() {
+        when(claimRepository.findById(1)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> claimService.getClaimStatus(1));
+
+        assertTrue(ex.getMessage().contains("Claim not found"));
+    }
+
 }
