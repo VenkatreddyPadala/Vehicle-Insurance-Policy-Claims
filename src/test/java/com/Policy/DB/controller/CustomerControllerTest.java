@@ -110,4 +110,38 @@ class CustomerControllerTest {
         mockMvc.perform(delete("/customers/delete/99"))
                 .andExpect(status().isNotFound());
     }
+    @Test
+    void registerCustomer_exception() throws Exception {
+        Customer customer = new Customer(1, "Venkat",
+                "venkat@gmail.com", "9876543210", "Hyderabad", null);
+
+        Mockito.when(customerService.registerCustomer(Mockito.any(Customer.class)))
+                .thenThrow(new RuntimeException("DB error"));
+
+        mockMvc.perform(post("/customers/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(customer)))
+                .andExpect(status().isBadRequest());
+    }
+    @Test
+    void updateCustomer_notFound() throws Exception {
+        Customer customer = new Customer(1, "Venkat",
+                "v@gmail.com", "999", "Hyd", null);
+
+        Mockito.when(customerService.updateCustomerProfile(Mockito.eq(99), Mockito.any(Customer.class)))
+                .thenThrow(new RuntimeException("Customer not found"));
+
+        mockMvc.perform(put("/customers/update/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(customer)))
+                .andExpect(status().isNotFound());
+    }
+    @Test
+    void getCustomerDetails_notFound() throws Exception {
+        Mockito.when(customerService.getCustomerDetails(99))
+                .thenThrow(new RuntimeException("Customer not found"));
+
+        mockMvc.perform(get("/customers/99"))
+                .andExpect(status().isNotFound());
+    }
 }

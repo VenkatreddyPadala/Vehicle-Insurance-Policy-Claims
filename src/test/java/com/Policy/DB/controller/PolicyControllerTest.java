@@ -125,4 +125,34 @@ class PolicyControllerTest {
         mockMvc.perform(get("/policies/expired"))
                 .andExpect(status().isOk());
     }
+    @Test
+    void createPolicy_exception() throws Exception {
+        Policy policy = new Policy();
+
+        Mockito.when(policyService.createPolicy(Mockito.any(Policy.class), Mockito.eq(99)))
+                .thenThrow(new RuntimeException("Vehicle not found"));
+
+        mockMvc.perform(post("/policies/create/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(policy)))
+                .andExpect(status().isNotFound());
+    }
+    @Test
+    void getPolicyDetails_notFound() throws Exception {
+        Mockito.when(policyService.getPolicyDetails(99))
+                .thenThrow(new RuntimeException("Policy not found"));
+
+        mockMvc.perform(get("/policies/99"))
+                .andExpect(status().isNotFound());
+    }
+    @Test
+    void renewPolicy_notFound() throws Exception {
+        Mockito.when(policyService.renewPolicy(Mockito.eq(99), Mockito.any(LocalDate.class)))
+                .thenThrow(new RuntimeException("Policy not found"));
+
+        mockMvc.perform(put("/policies/renew/99")
+                        .param("endDate", "2026-12-31"))
+                .andExpect(status().isNotFound());
+    }
+
 }
