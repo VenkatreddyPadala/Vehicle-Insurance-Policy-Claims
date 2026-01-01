@@ -208,7 +208,7 @@ mvn spring-boot:run
 ### Using Java
 
 ```bash
-java -jar target/DB-0.0.1-SNAPSHOT.jar
+java -jar target/DB-0.0.1.jar
 ```
 
 ### Access the Application

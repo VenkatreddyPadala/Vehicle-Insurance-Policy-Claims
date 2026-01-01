@@ -15,7 +15,7 @@
 
 	<groupId>com.Policy</groupId>
 	<artifactId>DB</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>DB</name>
 	<description>DB connection</description>
 
