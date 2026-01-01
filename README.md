@@ -223,24 +223,42 @@ java -jar target/DB-0.0.1-SNAPSHOT.jar
 
 #### Authentication
 ```
-POST   /customers/register          # Register new customer
-GET    /customers/{id}              # Get customer by ID
+POST   /login          
+GET    /validate
+POST   /register              
 ```
 
 #### Vehicles
 ```
-GET    /vehicles/customer/{customerId}     # Get customer vehicles
+POST    /add/{customerId}            # addVehicle
+GET     /{vehicleId}                 # getVehicleDetails
+PUT     /update/{vehicleId}          # updateVehicleDetails
+GET     /customer/{customerId}       # getVehiclesByCustomerId
+GET     /all                         # getAllVehicles
+DELETE  /delete/{vehicleId}          # deleteVehicle
 ```
 
 #### Policies
 ```
-GET    /policies/customer/{customerId}     # Get customer policies
+POST    /create/{vehicleId}          # createPolicy
+GET     /{policyId}                  # getPolicyDetails
+PUT     /renew/{policyId}            # renewPolicy
+GET     /all                         # getAllPolicies
+GET     /customer/{customerId}       # getPoliciesByCustomerId
+GET     /active                      # getActivePolicies
+GET     /expired                     # getExpiredPolicies
 ```
 
 #### Claims
 ```
-POST   /claims/file/{policyId}             # File a claim
-GET    /claims/customer/{customerId}       # Get customer claims
+POST   /file/{policyId}              # File a claim
+PUT    /process/{claimId}            # processClaim
+GET    /{claimId}                    # getClaimStatus
+GET    /all                          # getAllClaims
+GET    /policy/{policyId}            # getClaimsByPolicyId
+GET    /customer/{customerId}        # getClaimsByCustomerId
+GET    /pending                      # getPendingClaims
+GET    /status/{status}              # getClaimsByStatus   
 ```
 
 #### Approval Requests
@@ -296,8 +314,8 @@ The project includes comprehensive unit tests for:
 
 ### Current Test Coverage
 
-- **Controller Layer**: ~95% coverage
-- **Service Layer**: ~95% coverage
+- **Controller Layer**: ~91% coverage
+- **Service Layer**: ~92% coverage
 - **Overall**: Targeting 80%+ coverage for business logic
 
 ## 📊 Code Coverage
