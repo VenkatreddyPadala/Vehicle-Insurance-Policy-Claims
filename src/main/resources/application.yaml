@@ -2,7 +2,7 @@ spring:
   application:
     name: DB
   datasource:
-    url: jdbc:mysql://localhost:3306/Insurancepolicy?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/InsurancepolicyMadhurya?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: Venkatreddy123$
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -171,11 +171,101 @@
            text-decoration: underline;
        }
 
-       .help-text {
+       .modal {
+           display: none;
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           background: rgba(0, 0, 0, 0.5);
+           z-index: 1000;
+           align-items: center;
+           justify-content: center;
+       }
+
+       .modal.active {
+           display: flex;
+       }
+
+       .modal-content {
+           background: white;
+           padding: 40px;
+           border-radius: 8px;
+           max-width: 400px;
+           width: 90%;
+           text-align: center;
+           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+       }
+
+       .modal-icon {
+           font-size: 48px;
+           margin-bottom: 20px;
+       }
+
+       .modal-title {
+           font-size: 22px;
+           font-weight: 600;
+           color: #000;
+           margin-bottom: 12px;
+       }
+
+       .modal-message {
+           font-size: 14px;
+           color: #666;
+           margin-bottom: 24px;
+           line-height: 1.6;
+       }
+
+       .customer-id-box {
+           background: #f5f5f5;
+           padding: 20px;
+           border-radius: 6px;
+           margin-bottom: 24px;
+           border: 2px solid #e0e0e0;
+       }
+
+       .customer-id-label {
            font-size: 12px;
            color: #666;
-           margin-top: 8px;
-           font-weight: 400;
+           margin-bottom: 8px;
+           font-weight: 500;
+           text-transform: uppercase;
+           letter-spacing: 0.5px;
+       }
+
+       .customer-id-value {
+           font-size: 32px;
+           font-weight: 700;
+           color: #000;
+           font-family: 'Courier New', monospace;
+       }
+
+       .modal-note {
+           font-size: 13px;
+           color: #d32f2f;
+           margin-bottom: 24px;
+           padding: 12px;
+           background: #ffebee;
+           border-radius: 6px;
+           font-weight: 500;
+       }
+
+       .modal-btn {
+           width: 100%;
+           padding: 14px 28px;
+           border: none;
+           border-radius: 6px;
+           font-size: 13px;
+           font-weight: 600;
+           cursor: pointer;
+           background: #000;
+           color: white;
+           transition: all 0.15s;
+       }
+
+       .modal-btn:hover {
+           background: #333;
        }
 
        @media (max-width: 480px) {
@@ -185,6 +275,14 @@
 
            .login-header h1 {
                font-size: 20px;
+           }
+
+           .modal-content {
+               padding: 30px 20px;
+           }
+
+           .customer-id-value {
+               font-size: 28px;
            }
        }
     </style>
@@ -223,19 +321,28 @@
     <div id="register" class="tab-content">
         <form id="registerForm">
             <div class="form-group">
-                <label>Customer ID</label>
-                <input type="number" id="regCustomerId" placeholder="Your customer ID" required>
-                <div class="help-text">Contact admin if you don't have a customer ID</div>
-            </div>
-
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="regUsername" placeholder="Choose a username" required>
+                <label>Full Name</label>
+                <input type="text" id="regName" placeholder="Enter your full name" required>
             </div>
 
             <div class="form-group">
                 <label>Email</label>
                 <input type="email" id="regEmail" placeholder="your.email@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" id="regPhone" placeholder="Your phone number" required>
+            </div>
+
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" id="regAddress" placeholder="Your address" required>
+            </div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="regUsername" placeholder="Choose a username" required>
             </div>
 
             <div class="form-group">
@@ -249,7 +356,27 @@
     </div>
 
     <div class="footer-links">
-        <p>Admin? <a href="admin-login.html">Login here</a></p>
+        <p>Admin? <a href="/admin/admin-login.html">Login here</a></p>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal" id="successModal">
+    <div class="modal-content">
+        <div class="modal-icon">✅</div>
+        <h2 class="modal-title">Registration Successful!</h2>
+        <p class="modal-message">Your account has been created successfully. Please save your Customer ID for future reference.</p>
+
+        <div class="customer-id-box">
+            <div class="customer-id-label">Your Customer ID</div>
+            <div class="customer-id-value" id="displayCustomerId">-</div>
+        </div>
+
+        <div class="modal-note">
+            ⚠️ Please save this ID! You may need it for customer support inquiries.
+        </div>
+
+        <button class="modal-btn" id="continueBtn">Continue to Dashboard</button>
     </div>
 </div>
 
@@ -295,19 +422,10 @@
                     return;
                 }
 
-                // Store token and user data
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify({
-                    username: data.username,
-                    email: data.email,
-                    role: data.role,
-                    customerId: data.customerId
-                }));
-
                 alertDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
 
                 setTimeout(() => {
-                    window.location.href = 'customer-dashboard.html';
+                    window.location.href = '/customer/customer-dashboard.html';
                 }, 1000);
             } else {
                 alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Login failed'}</div>`;
@@ -328,10 +446,15 @@
         const registerBtn = document.getElementById('registerBtn');
         const alertDiv = document.getElementById('registerAlert');
 
-        const customerId = parseInt(document.getElementById('regCustomerId').value);
-        const username = document.getElementById('regUsername').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
+        const requestData = {
+            name: document.getElementById('regName').value,
+            email: document.getElementById('regEmail').value,
+            phone: document.getElementById('regPhone').value,
+            address: document.getElementById('regAddress').value,
+            username: document.getElementById('regUsername').value,
+            password: document.getElementById('regPassword').value,
+            role: 'CUSTOMER'
+        };
 
         registerBtn.disabled = true;
         registerBtn.textContent = 'Creating account...';
@@ -341,32 +464,20 @@
             const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username,
-                    email,
-                    password,
-                    role: 'CUSTOMER',
-                    customerId
-                })
+                body: JSON.stringify(requestData)
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // Store token and user data
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify({
-                    username: data.username,
-                    email: data.email,
-                    role: data.role,
-                    customerId: data.customerId
-                }));
+                // Show success modal with Customer ID
+                document.getElementById('displayCustomerId').textContent = data.customerId;
+                document.getElementById('successModal').classList.add('active');
 
-                alertDiv.innerHTML = '<div class="alert alert-success">Registration successful! Redirecting...</div>';
-
-                setTimeout(() => {
-                    window.location.href = 'customer-dashboard.html';
-                }, 1000);
+                // Store token and redirect on button click
+                document.getElementById('continueBtn').onclick = () => {
+                    window.location.href = '/customer/customer-dashboard.html';
+                };
             } else {
                 alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Registration failed'}</div>`;
                 registerBtn.disabled = false;
@@ -381,7 +492,9 @@
 
     // Check if already logged in
     window.onload = () => {
-        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
         if (token) {
             fetch(`${API_BASE_URL}/auth/validate`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -389,7 +502,7 @@
             .then(r => r.json())
             .then(data => {
                 if (data.valid && data.role === 'CUSTOMER') {
-                    window.location.href = 'customer-dashboard.html';
+                    window.location.href = '/customer/customer-dashboard.html?token=' + token;
                 }
             });
         }

@@ -2,6 +2,7 @@ package com.Policy.DB.service;
 
 import com.Policy.DB.dto.LoginRequest;
 import com.Policy.DB.dto.RegisterRequest;
+import com.Policy.DB.model.Customer;
 import com.Policy.DB.model.User;
 import com.Policy.DB.model.UserRole;
 import com.Policy.DB.repository.CustomerRepository;
@@ -98,18 +99,19 @@ class AuthServiceTest {
                 () -> authService.login(new LoginRequest("v", "bad")));
     }
 
-    // -------- REGISTER SUCCESS --------
+    // -------- REGISTER SUCCESS (ADMIN - no customer) --------
     @Test
-    void register_success() {
-        RegisterRequest request = new RegisterRequest(
-                "venkat", "v@gmail.com", "pass",
-                UserRole.ADMIN, null
-        );
+    void register_adminSuccess() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("admin");
+        request.setEmail("admin@gmail.com");
+        request.setPassword("pass");
+        request.setRole(UserRole.ADMIN);
 
-        when(userRepository.existsByUsername("venkat")).thenReturn(false);
-        when(userRepository.existsByEmail("v@gmail.com")).thenReturn(false);
+        when(userRepository.existsByUsername("admin")).thenReturn(false);
+        when(userRepository.existsByEmail("admin@gmail.com")).thenReturn(false);
         when(passwordEncoder.encode("pass")).thenReturn("encoded");
-        when(jwtUtil.generateToken("venkat")).thenReturn("token");
+        when(jwtUtil.generateToken("admin")).thenReturn("token");
 
         var response = authService.register(request);
 
@@ -117,37 +119,103 @@ class AuthServiceTest {
         verify(userRepository).save(any(User.class));
     }
 
+    // -------- REGISTER SUCCESS (CUSTOMER - auto-create) --------
+    @Test
+    void register_customerSuccess() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("customer");
+        request.setEmail("customer@gmail.com");
+        request.setPassword("pass");
+        request.setRole(UserRole.CUSTOMER);
+        request.setName("Customer Name");
+        request.setPhone("1234567890");
+        request.setAddress("123 Main St");
+
+        Customer savedCustomer = new Customer();
+        savedCustomer.setCustomerId(1);
+        savedCustomer.setName("Customer Name");
+
+        when(userRepository.existsByUsername("customer")).thenReturn(false);
+        when(userRepository.existsByEmail("customer@gmail.com")).thenReturn(false);
+        when(customerRepository.save(any(Customer.class))).thenReturn(savedCustomer);
+        when(passwordEncoder.encode("pass")).thenReturn("encoded");
+        when(jwtUtil.generateToken("customer")).thenReturn("token");
+
+        var response = authService.register(request);
+
+        assertEquals("Registration successful", response.getMessage());
+        assertEquals(1, response.getCustomerId());
+        verify(customerRepository).save(any(Customer.class));
+        verify(userRepository).save(any(User.class));
+    }
+
     // -------- REGISTER USERNAME EXISTS --------
     @Test
     void register_usernameExists() {
-        when(userRepository.existsByUsername("v")).thenReturn(true);
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("duplicate");
+        request.setEmail("e@gmail.com");
+        request.setPassword("p");
+        request.setRole(UserRole.ADMIN);
+
+        when(userRepository.existsByUsername("duplicate")).thenReturn(true);
 
         assertThrows(RuntimeException.class,
-                () -> authService.register(
-                        new RegisterRequest("v", "e", "p", UserRole.ADMIN, null)));
+                () -> authService.register(request));
     }
 
-    // -------- REGISTER CUSTOMER ROLE NO CUSTOMER ID --------
+    // -------- REGISTER EMAIL EXISTS --------
     @Test
-    void register_customerWithoutCustomerId() {
-        when(userRepository.existsByUsername("v")).thenReturn(false);
-        when(userRepository.existsByEmail("e")).thenReturn(false);
+    void register_emailExists() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("newuser");
+        request.setEmail("duplicate@gmail.com");
+        request.setPassword("p");
+        request.setRole(UserRole.ADMIN);
+
+        when(userRepository.existsByUsername("newuser")).thenReturn(false);
+        when(userRepository.existsByEmail("duplicate@gmail.com")).thenReturn(true);
 
         assertThrows(RuntimeException.class,
-                () -> authService.register(
-                        new RegisterRequest("v", "e", "p", UserRole.CUSTOMER, null)));
+                () -> authService.register(request));
     }
 
-    // -------- REGISTER CUSTOMER NOT FOUND --------
+    // -------- REGISTER CUSTOMER WITHOUT NAME --------
     @Test
-    void register_customerNotFound() {
-        when(userRepository.existsByUsername("v")).thenReturn(false);
-        when(userRepository.existsByEmail("e")).thenReturn(false);
-        when(customerRepository.existsById(1)).thenReturn(false);
+    void register_customerWithoutName() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("customer");
+        request.setEmail("customer@gmail.com");
+        request.setPassword("pass");
+        request.setRole(UserRole.CUSTOMER);
+        request.setPhone("1234567890");
+        request.setAddress("123 Main St");
+        // Missing name
+
+        when(userRepository.existsByUsername("customer")).thenReturn(false);
+        when(userRepository.existsByEmail("customer@gmail.com")).thenReturn(false);
 
         assertThrows(RuntimeException.class,
-                () -> authService.register(
-                        new RegisterRequest("v", "e", "p", UserRole.CUSTOMER, 1)));
+                () -> authService.register(request));
+    }
+
+    // -------- REGISTER CUSTOMER WITHOUT PHONE --------
+    @Test
+    void register_customerWithoutPhone() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("customer");
+        request.setEmail("customer@gmail.com");
+        request.setPassword("pass");
+        request.setRole(UserRole.CUSTOMER);
+        request.setName("Customer Name");
+        request.setAddress("123 Main St");
+        // Missing phone
+
+        when(userRepository.existsByUsername("customer")).thenReturn(false);
+        when(userRepository.existsByEmail("customer@gmail.com")).thenReturn(false);
+
+        assertThrows(RuntimeException.class,
+                () -> authService.register(request));
     }
 
     // -------- GET USER BY TOKEN --------

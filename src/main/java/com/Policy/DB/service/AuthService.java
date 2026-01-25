@@ -2,6 +2,7 @@ package com.Policy.DB.service;
 import com.Policy.DB.dto.LoginRequest;
 import com.Policy.DB.dto.LoginResponse;
 import com.Policy.DB.dto.RegisterRequest;
+import com.Policy.DB.model.Customer;
 import com.Policy.DB.model.User;
 import com.Policy.DB.model.UserRole;
 import com.Policy.DB.repository.UserRepository;
@@ -69,18 +70,30 @@ public class AuthService {
             throw new RuntimeException("Email already exists");
         }
 
-        // If role is CUSTOMER, verify customer exists
+        Integer customerId = null;
+
+        // If role is CUSTOMER, create customer record first
         if (request.getRole() == UserRole.CUSTOMER) {
-            if (request.getCustomerId() == null) {
-                throw new RuntimeException("Customer ID is required for customer role");
+            // Validate required fields
+            if (request.getName() == null || request.getName().trim().isEmpty()) {
+                throw new RuntimeException("Name is required for customer registration");
             }
-            if (!customerRepository.existsById(request.getCustomerId())) {
-                throw new RuntimeException("Customer not found");
+            if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
+                throw new RuntimeException("Phone is required for customer registration");
             }
-            // Check if customer already has a user account
-            if (userRepository.findByCustomerId(request.getCustomerId()).isPresent()) {
-                throw new RuntimeException("This customer already has a user account");
-            }
+
+            // Create new customer
+            Customer customer = new Customer();
+            customer.setName(request.getName());
+            customer.setEmail(request.getEmail());
+            customer.setPhone(request.getPhone());
+            customer.setAddress(request.getAddress());
+
+            Customer savedCustomer = customerRepository.save(customer);
+            customerId = savedCustomer.getCustomerId();
+        } else if (request.getRole() == UserRole.ADMIN) {
+            // For admin registration, customerId should be null
+            customerId = null;
         }
 
         // Create new user
@@ -89,7 +102,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
-        user.setCustomerId(request.getCustomerId());
+        user.setCustomerId(customerId);
         user.setIsActive(true);
 
         userRepository.save(user);

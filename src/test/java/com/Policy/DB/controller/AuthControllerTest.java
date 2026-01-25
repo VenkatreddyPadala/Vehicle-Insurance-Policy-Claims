@@ -12,7 +12,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -67,13 +66,17 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.error").value("Invalid username or password"));
     }
 
-    // -------- REGISTER SUCCESS --------
+    // -------- REGISTER SUCCESS (CUSTOMER) --------
     @Test
     void register_success() throws Exception {
-        RegisterRequest request = new RegisterRequest(
-                "venkat", "v@gmail.com", "pass",
-                UserRole.CUSTOMER, 1
-        );
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("venkat");
+        request.setEmail("v@gmail.com");
+        request.setPassword("pass");
+        request.setRole(UserRole.CUSTOMER);
+        request.setName("Venkat Kumar");
+        request.setPhone("1234567890");
+        request.setAddress("123 Main St");
 
         LoginResponse response = new LoginResponse(
                 "token", "venkat", "v@gmail.com",
@@ -96,9 +99,18 @@ class AuthControllerTest {
         Mockito.when(authService.register(Mockito.any(RegisterRequest.class)))
                 .thenThrow(new RuntimeException("Username already exists"));
 
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("duplicate");
+        request.setEmail("dup@gmail.com");
+        request.setPassword("pass");
+        request.setRole(UserRole.CUSTOMER);
+        request.setName("Test User");
+        request.setPhone("1234567890");
+        request.setAddress("Test Address");
+
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RegisterRequest())))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Username already exists"));
     }
