@@ -1,11 +1,9 @@
 package com.Policy.DB.service;
 
-import com.Policy.DB.model.Claim;
-import com.Policy.DB.model.ClaimStatus;
-import com.Policy.DB.model.Policy;
-import com.Policy.DB.model.PolicyStatus;
+import com.Policy.DB.model.*;
 import com.Policy.DB.repository.ClaimRepository;
 import com.Policy.DB.repository.PolicyRepository;
+import com.Policy.DB.repository.CustomerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,10 +28,13 @@ class ReportServiceTest {
     @Mock
     private PolicyRepository policyRepository;
 
+    @Mock
+    private CustomerRepository customerRepository;
+
     @InjectMocks
     private ReportService reportService;
 
-    // -------- Claim Report --------
+    // ---------------- Claim Report (JSON) ----------------
     @Test
     void generateClaimReport_success() {
         when(claimRepository.findAll()).thenReturn(List.of(new Claim(), new Claim()));
@@ -50,10 +52,50 @@ class ReportServiceTest {
         assertEquals(2, report.get("totalClaims"));
         assertEquals(BigDecimal.valueOf(5000), report.get("approvedClaimAmount"));
         assertEquals(BigDecimal.ZERO, report.get("rejectedClaimAmount"));
+        assertEquals(BigDecimal.valueOf(2000), report.get("submittedClaimAmount"));
         assertEquals(1, report.get("pendingClaims"));
     }
 
-    // -------- Policy Report --------
+    @Test
+    void generateClaimReport_allAmountsNull() {
+        when(claimRepository.findAll()).thenReturn(List.of());
+        when(claimRepository.getTotalClaimAmountByStatus(any()))
+                .thenReturn(null);
+        when(claimRepository.findPendingClaims())
+                .thenReturn(List.of());
+
+        Map<String, Object> report = reportService.generateClaimReport();
+
+        assertEquals(BigDecimal.ZERO, report.get("approvedClaimAmount"));
+        assertEquals(BigDecimal.ZERO, report.get("rejectedClaimAmount"));
+        assertEquals(BigDecimal.ZERO, report.get("submittedClaimAmount"));
+    }
+
+    // ---------------- Claim Report (PDF) ----------------
+    @Test
+    void generateClaimReportPdf_success() {
+        // Arrange
+        Claim claim = new Claim();
+        claim.setClaimId(1);
+        claim.setClaimAmount(BigDecimal.valueOf(1000));
+        claim.setClaimDate(java.time.LocalDate.now()); // IMPORTANT
+        claim.setClaimStatus(ClaimStatus.APPROVED);
+        claim.setClaimReason("Accident damage");
+
+        when(claimRepository.findAll()).thenReturn(List.of(claim));
+        when(claimRepository.getTotalClaimAmountByStatus(any()))
+                .thenReturn(BigDecimal.valueOf(1000));
+
+        // Act
+        byte[] pdf = reportService.generateClaimReportPdf();
+
+        // Assert
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 0);
+    }
+
+
+    // ---------------- Policy Report (JSON) ----------------
     @Test
     void generatePolicyReport_success() {
         Policy p1 = new Policy();
@@ -72,10 +114,39 @@ class ReportServiceTest {
 
         assertEquals(2, report.get("totalPolicies"));
         assertEquals(1, report.get("activePolicies"));
+        assertEquals(1, report.get("expiredPolicies"));
         assertEquals(BigDecimal.valueOf(3000), report.get("totalPremiumCollected"));
     }
 
-    // -------- Customer Report --------
+    // ---------------- Policy Report (PDF) ----------------
+    @Test
+    void generatePolicyReportPdf_success() {
+        // Arrange
+        Policy policy = new Policy();
+        policy.setPolicyId(1);
+        policy.setPolicyNumber("POL123");
+        policy.setCoverageAmount(BigDecimal.valueOf(50000));
+        policy.setPremiumAmount(BigDecimal.valueOf(1500));
+        policy.setStartDate(java.time.LocalDate.now()); // IMPORTANT
+        policy.setEndDate(java.time.LocalDate.now().plusYears(1)); // IMPORTANT
+        policy.setPolicyStatus(PolicyStatus.ACTIVE);
+
+        when(policyRepository.findAll()).thenReturn(List.of(policy));
+        when(policyRepository.findByPolicyStatus(PolicyStatus.ACTIVE))
+                .thenReturn(List.of(policy));
+        when(policyRepository.findByPolicyStatus(PolicyStatus.EXPIRED))
+                .thenReturn(List.of());
+
+        // Act
+        byte[] pdf = reportService.generatePolicyReportPdf();
+
+        // Assert
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 0);
+    }
+
+
+    // ---------------- Customer Report (JSON) ----------------
     @Test
     void generateCustomerReport_success() {
         Claim claim = new Claim();
@@ -94,35 +165,26 @@ class ReportServiceTest {
         assertEquals(1, report.get("totalClaims"));
         assertEquals(BigDecimal.valueOf(5000), report.get("totalClaimAmount"));
     }
+
+    // ---------------- Customer Report (PDF) ----------------
     @Test
-    void generateClaimReport_submittedAmountNull() {
-        when(claimRepository.findAll()).thenReturn(List.of(new Claim()));
-        when(claimRepository.getTotalClaimAmountByStatus(ClaimStatus.APPROVED))
-                .thenReturn(BigDecimal.valueOf(1000));
-        when(claimRepository.getTotalClaimAmountByStatus(ClaimStatus.REJECTED))
-                .thenReturn(BigDecimal.valueOf(500));
-        when(claimRepository.getTotalClaimAmountByStatus(ClaimStatus.SUBMITTED))
-                .thenReturn(null);
-        when(claimRepository.findPendingClaims())
+    void generateCustomerReportPdf_success() {
+        Customer customer = new Customer();
+        customer.setCustomerId(1);
+        customer.setName("Venkat");
+        customer.setEmail("venkat@test.com");
+        customer.setPhone("9999999999");
+
+        when(customerRepository.findById(1))
+                .thenReturn(Optional.of(customer));
+        when(policyRepository.findByCustomerId(1))
+                .thenReturn(List.of());
+        when(claimRepository.findByCustomerId(1))
                 .thenReturn(List.of());
 
-        Map<String, Object> report = reportService.generateClaimReport();
+        byte[] pdf = reportService.generateCustomerReportPdf(1);
 
-        assertEquals(BigDecimal.ZERO, report.get("submittedClaimAmount"));
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 0);
     }
-    @Test
-    void generateClaimReport_allAmountsNull() {
-        when(claimRepository.findAll()).thenReturn(List.of());
-        when(claimRepository.getTotalClaimAmountByStatus(any()))
-                .thenReturn(null);
-        when(claimRepository.findPendingClaims())
-                .thenReturn(List.of());
-
-        Map<String, Object> report = reportService.generateClaimReport();
-
-        assertEquals(BigDecimal.ZERO, report.get("approvedClaimAmount"));
-        assertEquals(BigDecimal.ZERO, report.get("rejectedClaimAmount"));
-        assertEquals(BigDecimal.ZERO, report.get("submittedClaimAmount"));
-    }
-
 }

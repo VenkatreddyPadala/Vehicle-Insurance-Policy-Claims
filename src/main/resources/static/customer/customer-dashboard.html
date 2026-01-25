@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -627,6 +626,11 @@
                         <h4>File a Claim</h4>
                         <p>Submit a new insurance claim</p>
                     </div>
+                    <div class="action-card" onclick="downloadMyReport()">
+                        <div class="action-icon">📄</div>
+                        <h4>Download My Report</h4>
+                        <p>Get a comprehensive PDF report</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -680,6 +684,7 @@
         <div id="profile" class="tab-content">
             <div class="section-header">
                 <h2>My Profile</h2>
+                <button class="btn btn-secondary" onclick="downloadMyReport()">📄 Download My Report</button>
             </div>
             <div class="profile-card">
                 <div class="profile-info">
@@ -952,406 +957,412 @@
     }
 
     // Load My Policies
-    async function loadMyPolicies() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`);
-            const policies = await response.json();
+async function loadMyPolicies() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`);
+        const policies = await response.json();
 
-            const container = document.getElementById('policiesGrid');
+        const container = document.getElementById('policiesGrid');
 
-            if (policies.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No Policies Found</h3>
-                        <p>Request a policy to insure your vehicles.</p>
+        if (policies.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Policies Found</h3>
+                    <p>Request a policy to insure your vehicles.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = policies.map(policy => `
+            <div class="policy-card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Policy #${policy.policyNumber}</div>
+                        <div class="card-subtitle">${policy.vehicle?.registrationNumber || 'N/A'}</div>
                     </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = policies.map(policy => `
-                <div class="policy-card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">Policy #${policy.policyNumber}</div>
-                            <div class="card-subtitle">${policy.vehicle?.registrationNumber || 'N/A'}</div>
-                        </div>
-                        <span class="badge badge-${policy.policyStatus.toLowerCase()}">${policy.policyStatus}</span>
+                    <span class="badge badge-${policy.policyStatus.toLowerCase()}">${policy.policyStatus}</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-info">
+                        <span class="card-label">Coverage</span>
+                        <span class="card-value">₹${policy.coverageAmount?.toLocaleString()}</span>
                     </div>
-                    <div class="card-body">
-                        <div class="card-info">
-                            <span class="card-label">Coverage</span>
-                            <span class="card-value">₹${policy.coverageAmount?.toLocaleString()}</span>
-                        </div>
-                        <div class="card-info">
-                            <span class="card-label">Premium</span>
-                            <span class="card-value">₹${policy.premiumAmount?.toLocaleString()}</span>
-                        </div>
-                        <div class="card-info">
-                            <span class="card-label">Valid Until</span>
-                            <span class="card-value">${policy.endDate}</span>
-                        </div>
+                    <div class="card-info">
+                        <span class="card-label">Premium</span>
+                        <span class="card-value">₹${policy.premiumAmount?.toLocaleString()}</span>
+                    </div>
+                    <div class="card-info">
+                        <span class="card-label">Valid Until</span>
+                        <span class="card-value">${policy.endDate}</span>
                     </div>
                 </div>
-            `).join('');
-        } catch (error) {
-            console.error('Error loading policies:', error);
-        }
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading policies:', error);
     }
+}
 
-    // Load My Claims
-    async function loadMyClaims() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/claims/customer/${currentCustomer.customerId}`);
-            const claims = await response.json();
+// Load My Claims
+async function loadMyClaims() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/claims/customer/${currentCustomer.customerId}`);
+        const claims = await response.json();
 
-            const container = document.getElementById('claimsGrid');
+        const container = document.getElementById('claimsGrid');
 
-            if (claims.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No Claims Found</h3>
-                        <p>You haven't filed any claims yet.</p>
+        if (claims.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Claims Found</h3>
+                    <p>You haven't filed any claims yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = claims.map(claim => `
+            <div class="claim-card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Claim #${claim.claimId}</div>
+                        <div class="card-subtitle">Policy: ${claim.policy?.policyNumber || 'N/A'}</div>
                     </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = claims.map(claim => `
-                <div class="claim-card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">Claim #${claim.claimId}</div>
-                            <div class="card-subtitle">Policy: ${claim.policy?.policyNumber || 'N/A'}</div>
-                        </div>
-                        <span class="badge badge-${claim.claimStatus.toLowerCase()}">${claim.claimStatus}</span>
+                    <span class="badge badge-${claim.claimStatus.toLowerCase()}">${claim.claimStatus}</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-info">
+                        <span class="card-label">Amount</span>
+                        <span class="card-value">₹${claim.claimAmount?.toLocaleString()}</span>
                     </div>
-                    <div class="card-body">
-                        <div class="card-info">
-                            <span class="card-label">Amount</span>
-                            <span class="card-value">₹${claim.claimAmount?.toLocaleString()}</span>
-                        </div>
-                        <div class="card-info">
-                            <span class="card-label">Date Filed</span>
-                            <span class="card-value">${claim.claimDate}</span>
-                        </div>
-                        <div class="card-info">
-                            <span class="card-label">Reason</span>
-                            <span class="card-value" style="font-weight: normal;">${claim.claimReason}</span>
-                        </div>
+                    <div class="card-info">
+                        <span class="card-label">Date Filed</span>
+                        <span class="card-value">${claim.claimDate}</span>
+                    </div>
+                    <div class="card-info">
+                        <span class="card-label">Reason</span>
+                        <span class="card-value" style="font-weight: normal;">${claim.claimReason}</span>
                     </div>
                 </div>
-            `).join('');
-        } catch (error) {
-            console.error('Error loading claims:', error);
-        }
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading claims:', error);
     }
+}
 
-    // Load My Requests
-    async function loadMyRequests() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/approvals/customer/${currentCustomer.customerId}`);
-            const requests = await response.json();
+// Load My Requests
+async function loadMyRequests() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/customer/${currentCustomer.customerId}`);
+        const requests = await response.json();
 
-            const container = document.getElementById('requestsGrid');
+        const container = document.getElementById('requestsGrid');
 
-            if (requests.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No Requests Found</h3>
-                        <p>You haven't submitted any approval requests yet.</p>
-                    </div>
-                `;
-                return;
-            }
+        if (requests.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Requests Found</h3>
+                    <p>You haven't submitted any approval requests yet.</p>
+                </div>
+            `;
+            return;
+        }
 
-            container.innerHTML = requests.map(request => {
-                const data = JSON.parse(request.requestData);
-                const typeIcon = request.requestType === 'VEHICLE_REGISTRATION' ? '🚗' : '📋';
-                const statusClass = request.status.toLowerCase();
+        container.innerHTML = requests.map(request => {
+            const data = JSON.parse(request.requestData);
+            const typeIcon = request.requestType === 'VEHICLE_REGISTRATION' ? '🚗' : '📋';
+            const statusClass = request.status.toLowerCase();
 
-                return `
-                    <div class="request-card">
-                        <div class="card-header">
-                            <div>
-                                <div class="card-title">${typeIcon} ${request.requestType.replace('_', ' ')}</div>
-                                <div class="card-subtitle">Request #${request.requestId}</div>
-                            </div>
-                            <span class="badge badge-${statusClass}">${request.status}</span>
+            return `
+                <div class="request-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${typeIcon} ${request.requestType.replace('_', ' ')}</div>
+                            <div class="card-subtitle">Request #${request.requestId}</div>
                         </div>
-                        <div class="card-body">
-                            ${request.requestType === 'VEHICLE_REGISTRATION' ? `
-                                <div class="card-info">
-                                    <span class="card-label">Registration</span>
-                                    <span class="card-value">${data.registrationNumber}</span>
-                                </div>
-                                <div class="card-info">
-                                    <span class="card-label">Vehicle</span>
-                                    <span class="card-value">${data.make} ${data.model}</span>
-                                </div>
-                                <div class="card-info">
-                                    <span class="card-label">Type</span>
-                                    <span class="card-value">${data.vehicleType}</span>
-                                </div>
-                            ` : `
-                                <div class="card-info">
-                                    <span class="card-label">Coverage</span>
-                                    <span class="card-value">₹${data.coverageAmount.toLocaleString()}</span>
-                                </div>
-                                <div class="card-info">
-                                    <span class="card-label">Duration</span>
-                                    <span class="card-value">${data.startDate} to ${data.endDate}</span>
-                                </div>
-                            `}
+                        <span class="badge badge-${statusClass}">${request.status}</span>
+                    </div>
+                    <div class="card-body">
+                        ${request.requestType === 'VEHICLE_REGISTRATION' ? `
                             <div class="card-info">
-                                <span class="card-label">Submitted</span>
-                                <span class="card-value" style="font-weight: normal;">${new Date(request.createdAt).toLocaleDateString()}</span>
+                                <span class="card-label">Registration</span>
+                                <span class="card-value">${data.registrationNumber}</span>
                             </div>
-                            ${request.adminComments ? `
-                                <div class="card-info">
-                                    <span class="card-label">Admin Notes</span>
-                                    <span class="card-value" style="font-weight: normal;">${request.adminComments}</span>
-                                </div>
-                            ` : ''}
+                            <div class="card-info">
+                                <span class="card-label">Vehicle</span>
+                                <span class="card-value">${data.make} ${data.model}</span>
+                            </div>
+                            <div class="card-info">
+                                <span class="card-label">Type</span>
+                                <span class="card-value">${data.vehicleType}</span>
+                            </div>
+                        ` : `
+                            <div class="card-info">
+                                <span class="card-label">Coverage</span>
+                                <span class="card-value">₹${data.coverageAmount.toLocaleString()}</span>
+                            </div>
+                            <div class="card-info">
+                                <span class="card-label">Duration</span>
+                                <span class="card-value">${data.startDate} to ${data.endDate}</span>
+                            </div>
+                        `}
+                        <div class="card-info">
+                            <span class="card-label">Submitted</span>
+                            <span class="card-value" style="font-weight: normal;">${new Date(request.createdAt).toLocaleDateString()}</span>
                         </div>
+                        ${request.adminComments ? `
+                            <div class="card-info">
+                                <span class="card-label">Admin Notes</span>
+                                <span class="card-value" style="font-weight: normal;">${request.adminComments}</span>
+                            </div>
+                        ` : ''}
                     </div>
-                `;
-            }).join('');
-        } catch (error) {
-            console.error('Error loading requests:', error);
-            document.getElementById('requestsGrid').innerHTML = '<div class="loading">Error loading requests</div>';
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading requests:', error);
+        document.getElementById('requestsGrid').innerHTML = '<div class="loading">Error loading requests</div>';
+    }
+}
+
+// Load Profile
+function loadProfile() {
+    document.getElementById('profileName').textContent = currentCustomer.name;
+    document.getElementById('profileEmail').textContent = '📧 ' + currentCustomer.email;
+    document.getElementById('profilePhone').textContent = '📱 ' + currentCustomer.phone;
+    document.getElementById('profileAddress').textContent = '🏠 ' + currentCustomer.address;
+
+    const initial = currentCustomer.name.charAt(0).toUpperCase();
+    document.getElementById('profileInitial').textContent = initial;
+}
+
+// Request Vehicle Registration
+function requestVehicleRegistration() {
+    document.getElementById('requestVehicleModal').classList.add('active');
+}
+
+function closeRequestVehicleModal() {
+    document.getElementById('requestVehicleModal').classList.remove('active');
+    document.getElementById('requestVehicleForm').reset();
+}
+
+// Request Vehicle Form Handler
+document.getElementById('requestVehicleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const vehicleRequest = {
+        registrationNumber: document.getElementById('reqRegNumber').value,
+        make: document.getElementById('reqMake').value,
+        model: document.getElementById('reqModel').value,
+        yearOfManufacture: parseInt(document.getElementById('reqYear').value),
+        vehicleType: document.getElementById('reqVehicleType').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/request/vehicle/${currentCustomer.customerId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vehicleRequest)
+        });
+
+        if (response.ok) {
+            showAlert('requestAlert', 'Vehicle registration request submitted! Awaiting admin approval.', 'success');
+            closeRequestVehicleModal();
+            loadMyRequests();
+            loadOverview();
+        } else {
+            const error = await response.json();
+            showAlert('requestAlert', 'Failed: ' + (error.error || 'Unknown error'), 'error');
         }
+    } catch (error) {
+        showAlert('requestAlert', 'Error: ' + error.message, 'error');
     }
+});
 
-    // Load Profile
-    function loadProfile() {
-        document.getElementById('profileName').textContent = currentCustomer.name;
-        document.getElementById('profileEmail').textContent = '📧 ' + currentCustomer.email;
-        document.getElementById('profilePhone').textContent = '📱 ' + currentCustomer.phone;
-        document.getElementById('profileAddress').textContent = '🏠 ' + currentCustomer.address;
+// Request Policy Creation
+async function requestPolicyCreation() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`);
+        const vehicles = await response.json();
 
-        const initial = currentCustomer.name.charAt(0).toUpperCase();
-        document.getElementById('profileInitial').textContent = initial;
-    }
-
-    // Request Vehicle Registration
-    function requestVehicleRegistration() {
-        document.getElementById('requestVehicleModal').classList.add('active');
-    }
-
-    function closeRequestVehicleModal() {
-        document.getElementById('requestVehicleModal').classList.remove('active');
-        document.getElementById('requestVehicleForm').reset();
-    }
-
-    // Request Vehicle Form Handler
-    document.getElementById('requestVehicleForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const vehicleRequest = {
-            registrationNumber: document.getElementById('reqRegNumber').value,
-            make: document.getElementById('reqMake').value,
-            model: document.getElementById('reqModel').value,
-            yearOfManufacture: parseInt(document.getElementById('reqYear').value),
-            vehicleType: document.getElementById('reqVehicleType').value
-        };
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/approvals/request/vehicle/${currentCustomer.customerId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vehicleRequest)
-            });
-
-            if (response.ok) {
-                showAlert('requestAlert', 'Vehicle registration request submitted! Awaiting admin approval.', 'success');
-                closeRequestVehicleModal();
-                loadMyRequests();
-                loadOverview();
-            } else {
-                const error = await response.json();
-                showAlert('requestAlert', 'Failed: ' + (error.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            showAlert('requestAlert', 'Error: ' + error.message, 'error');
-        }
-    });
-
-    // Request Policy Creation
-    async function requestPolicyCreation() {
-        try {
-            // Load customer's vehicles to populate the dropdown
-            const response = await fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`);
-            const vehicles = await response.json();
-
-            if (vehicles.length === 0) {
-                alert('You need to have at least one vehicle registered before requesting a policy. Please request vehicle registration first.');
-                return;
-            }
-
-            // Populate vehicle dropdown
-            const select = document.getElementById('reqPolicyVehicle');
-            select.innerHTML = '<option value="">Choose a vehicle...</option>' +
-                vehicles.map(v => `<option value="${v.vehicleId}">${v.make} ${v.model} (${v.registrationNumber})</option>`).join('');
-
-            // Set default dates (today to 1 year from today)
-            const today = new Date();
-            const oneYearLater = new Date(today);
-            oneYearLater.setFullYear(today.getFullYear() + 1);
-
-            document.getElementById('reqStartDate').value = today.toISOString().split('T')[0];
-            document.getElementById('reqEndDate').value = oneYearLater.toISOString().split('T')[0];
-
-            // Set minimum dates
-            document.getElementById('reqStartDate').min = today.toISOString().split('T')[0];
-            document.getElementById('reqEndDate').min = today.toISOString().split('T')[0];
-
-            // Show the modal
-            document.getElementById('requestPolicyModal').classList.add('active');
-        } catch (error) {
-            console.error('Error loading vehicles:', error);
-            alert('Failed to load vehicles. Please try again.');
-        }
-    }
-
-    function closeRequestPolicyModal() {
-        document.getElementById('requestPolicyModal').classList.remove('active');
-        document.getElementById('requestPolicyForm').reset();
-    }
-
-    // Request Policy Form Handler
-    document.getElementById('requestPolicyForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Get form values
-        const vehicleId = document.getElementById('reqPolicyVehicle').value;
-        const coverage = document.getElementById('reqCoverage').value;
-        const startDate = document.getElementById('reqStartDate').value;
-        const endDate = document.getElementById('reqEndDate').value;
-
-        // Validation
-        if (!vehicleId) {
-            alert('Please select a vehicle');
+        if (vehicles.length === 0) {
+            alert('You need to have at least one vehicle registered before requesting a policy. Please request vehicle registration first.');
             return;
         }
 
-        if (!coverage || parseFloat(coverage) <= 0) {
-            alert('Please enter a valid coverage amount');
-            return;
-        }
+        const select = document.getElementById('reqPolicyVehicle');
+        select.innerHTML = '<option value="">Choose a vehicle...</option>' +
+            vehicles.map(v => `<option value="${v.vehicleId}">${v.make} ${v.model} (${v.registrationNumber})</option>`).join('');
 
-        if (!startDate || !endDate) {
-            alert('Please select start and end dates');
-            return;
-        }
+        const today = new Date();
+        const oneYearLater = new Date(today);
+        oneYearLater.setFullYear(today.getFullYear() + 1);
 
-        // Check if end date is after start date
-        if (new Date(endDate) <= new Date(startDate)) {
-            alert('End date must be after start date');
-            return;
-        }
+        document.getElementById('reqStartDate').value = today.toISOString().split('T')[0];
+        document.getElementById('reqEndDate').value = oneYearLater.toISOString().split('T')[0];
 
-        const policyRequest = {
-            vehicleId: parseInt(vehicleId),
-            coverageAmount: parseFloat(coverage),
-            startDate: startDate,
-            endDate: endDate
-        };
+        document.getElementById('reqStartDate').min = today.toISOString().split('T')[0];
+        document.getElementById('reqEndDate').min = today.toISOString().split('T')[0];
 
-        console.log('Submitting policy request:', policyRequest);
+        document.getElementById('requestPolicyModal').classList.add('active');
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
+        alert('Failed to load vehicles. Please try again.');
+    }
+}
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/approvals/request/policy/${currentCustomer.customerId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(policyRequest)
-            });
+function closeRequestPolicyModal() {
+    document.getElementById('requestPolicyModal').classList.remove('active');
+    document.getElementById('requestPolicyForm').reset();
+}
 
-            console.log('Response status:', response.status);
+// Request Policy Form Handler
+document.getElementById('requestPolicyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Success:', result);
-                showAlert('requestAlert', 'Policy creation request submitted! Awaiting admin approval.', 'success');
-                closeRequestPolicyModal();
-                loadMyRequests();
-                loadOverview();
-                // Switch to requests tab to see the new request
-                switchTab('requests');
-            } else {
-                const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-                console.error('Error response:', error);
-                alert('Failed to submit request: ' + (error.error || error.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error submitting request: ' + error.message);
-        }
-    });
+    const vehicleId = document.getElementById('reqPolicyVehicle').value;
+    const coverage = document.getElementById('reqCoverage').value;
+    const startDate = document.getElementById('reqStartDate').value;
+    const endDate = document.getElementById('reqEndDate').value;
 
-    // File Claim Modal
-    async function showFileClaimModal() {
-        try {
-            // Load active policies
-            const response = await fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`);
-            const policies = await response.json();
-            const activePolicies = policies.filter(p => p.policyStatus === 'ACTIVE');
-
-            if (activePolicies.length === 0) {
-                alert('You need to have at least one active policy before filing a claim.');
-                return;
-            }
-
-            const select = document.getElementById('claimPolicySelect');
-            select.innerHTML = '<option value="">Choose a policy...</option>' +
-                activePolicies.map(p => `<option value="${p.policyId}">Policy #${p.policyNumber} - ${p.vehicle?.registrationNumber}</option>`).join('');
-
-            document.getElementById('fileClaimModal').classList.add('active');
-        } catch (error) {
-            console.error('Error loading policies:', error);
-            alert('Failed to load policies');
-        }
+    if (!vehicleId) {
+        alert('Please select a vehicle');
+        return;
     }
 
-    function closeFileClaimModal() {
-        document.getElementById('fileClaimModal').classList.remove('active');
-        document.getElementById('fileClaimForm').reset();
+    if (!coverage || parseFloat(coverage) <= 0) {
+        alert('Please enter a valid coverage amount');
+        return;
     }
 
-    // File Claim Form Handler
-    document.getElementById('fileClaimForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    if (!startDate || !endDate) {
+        alert('Please select start and end dates');
+        return;
+    }
 
-        const policyId = document.getElementById('claimPolicySelect').value;
-        const claim = {
-            claimAmount: parseFloat(document.getElementById('claimAmount').value),
-            claimDate: document.getElementById('claimDate').value,
-            claimReason: document.getElementById('claimReason').value
-        };
+    if (new Date(endDate) <= new Date(startDate)) {
+        alert('End date must be after start date');
+        return;
+    }
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/claims/file/${policyId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(claim)
-            });
+    const policyRequest = {
+        vehicleId: parseInt(vehicleId),
+        coverageAmount: parseFloat(coverage),
+        startDate: startDate,
+        endDate: endDate
+    };
 
-            if (response.ok) {
-                showAlert('claimAlert', 'Claim filed successfully! We will review it shortly.', 'success');
-                closeFileClaimModal();
-                loadMyClaims();
-                loadOverview();
-            } else {
-                const error = await response.text();
-                showAlert('claimAlert', 'Failed to file claim: ' + error, 'error');
-            }
-        } catch (error) {
-            showAlert('claimAlert', 'Error: ' + error.message, 'error');
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/request/policy/${currentCustomer.customerId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(policyRequest)
+        });
+
+        if (response.ok) {
+            showAlert('requestAlert', 'Policy creation request submitted! Awaiting admin approval.', 'success');
+            closeRequestPolicyModal();
+            loadMyRequests();
+            loadOverview();
+            switchTab('requests');
+        } else {
+            const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+            alert('Failed to submit request: ' + (error.error || error.message || 'Unknown error'));
         }
-    });
+    } catch (error) {
+        alert('Error submitting request: ' + error.message);
+    }
+});
 
-    // Set today's date as max for claim date
-    document.getElementById('claimDate').max = new Date().toISOString().split('T')[0];
+// File Claim Modal
+async function showFileClaimModal() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`);
+        const policies = await response.json();
+        const activePolicies = policies.filter(p => p.policyStatus === 'ACTIVE');
+
+        if (activePolicies.length === 0) {
+            alert('You need to have at least one active policy before filing a claim.');
+            return;
+        }
+
+        const select = document.getElementById('claimPolicySelect');
+        select.innerHTML = '<option value="">Choose a policy...</option>' +
+            activePolicies.map(p => `<option value="${p.policyId}">Policy #${p.policyNumber} - ${p.vehicle?.registrationNumber}</option>`).join('');
+
+        document.getElementById('fileClaimModal').classList.add('active');
+    } catch (error) {
+        console.error('Error loading policies:', error);
+        alert('Failed to load policies');
+    }
+}
+
+function closeFileClaimModal() {
+    document.getElementById('fileClaimModal').classList.remove('active');
+    document.getElementById('fileClaimForm').reset();
+}
+
+// File Claim Form Handler
+document.getElementById('fileClaimForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const policyId = document.getElementById('claimPolicySelect').value;
+    const claim = {
+        claimAmount: parseFloat(document.getElementById('claimAmount').value),
+        claimDate: document.getElementById('claimDate').value,
+        claimReason: document.getElementById('claimReason').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/claims/file/${policyId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(claim)
+        });
+
+        if (response.ok) {
+            showAlert('claimAlert', 'Claim filed successfully! We will review it shortly.', 'success');
+            closeFileClaimModal();
+            loadMyClaims();
+            loadOverview();
+        } else {
+            const error = await response.text();
+            showAlert('claimAlert', 'Failed to file claim: ' + error, 'error');
+        }
+    } catch (error) {
+        showAlert('claimAlert', 'Error: ' + error.message, 'error');
+    }
+});
+
+// Set today's date as max for claim date
+document.getElementById('claimDate').max = new Date().toISOString().split('T')[0];
+
+// Download customer report
+async function downloadMyReport() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download`);
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `customer_${currentCustomer.customerId}_report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } else {
+            alert('Failed to download report');
+        }
+    } catch (error) {
+        console.error('Error downloading report:', error);
+        alert('Error downloading report: ' + error.message);
+    }
+}
 </script>
 </body>
 </html>
