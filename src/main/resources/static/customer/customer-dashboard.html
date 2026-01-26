@@ -17,37 +17,6 @@
             min-height: 100vh;
         }
 
-        /* Login Screen */
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #fafafa;
-        }
-
-        .login-box {
-            background: white;
-            padding: 50px 60px;
-            border: 1px solid #e0e0e0;
-            max-width: 450px;
-            width: 100%;
-        }
-
-        .login-header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
-            color: #000;
-        }
-
-        .login-header p {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 40px;
-        }
-
         /* Dashboard */
         .dashboard-container {
             background: white;
@@ -153,7 +122,6 @@
             border-color: #000;
         }
 
-        /* Buttons */
         .btn {
             padding: 14px 28px;
             border: none;
@@ -188,7 +156,6 @@
             margin-right: 0;
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -223,7 +190,6 @@
             letter-spacing: 1px;
         }
 
-        /* Cards Grid */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -294,7 +260,6 @@
             font-weight: 600;
         }
 
-        /* Badges */
         .badge {
             padding: 4px 10px;
             border-radius: 4px;
@@ -350,7 +315,6 @@
             color: #000;
         }
 
-        /* Profile Card */
         .profile-card {
             background: white;
             border: 1px solid #e0e0e0;
@@ -390,7 +354,6 @@
             margin-bottom: 16px;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -452,7 +415,6 @@
             margin-top: 32px;
         }
 
-        /* Alerts */
         .alert {
             padding: 16px 20px;
             border-radius: 6px;
@@ -540,32 +502,43 @@
             font-size: 13px;
             color: #666;
         }
+
+        /* Loading Screen */
+        .auth-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #fafafa;
+        }
+
+        .auth-loading-content {
+            text-align: center;
+        }
+
+        .auth-loading-content h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #000;
+        }
+
+        .auth-loading-content p {
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-<!-- Login Screen -->
-<div id="loginScreen" class="login-container">
-    <div class="login-box">
-        <div class="login-header">
-            <h1>Insurance Portal</h1>
-            <p>Sign in to manage your policies</p>
-        </div>
-        <form id="loginForm">
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="loginEmail" placeholder="your.email@example.com" required>
-            </div>
-            <div class="form-group">
-                <label>Customer ID</label>
-                <input type="number" id="loginCustomerId" placeholder="Enter your customer ID" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-        </form>
-        <div id="loginAlert"></div>
+
+<div id="authLoading" class="auth-loading">
+    <div class="auth-loading-content">
+        <h2>Loading...</h2>
+        <p>Please wait while we verify your session</p>
     </div>
 </div>
 
-<!-- Customer Dashboard -->
+
 <div id="dashboardScreen" class="dashboard-container" style="display: none;">
     <div class="header">
         <div class="header-content">
@@ -587,7 +560,7 @@
     </div>
 
     <div class="content">
-        <!-- Overview Tab -->
+
         <div id="overview" class="tab-content active">
             <div class="stats-grid">
                 <div class="stat-card">
@@ -635,7 +608,7 @@
             </div>
         </div>
 
-        <!-- Vehicles Tab -->
+
         <div id="vehicles" class="tab-content">
             <div class="section-header">
                 <h2>My Vehicles</h2>
@@ -646,7 +619,7 @@
             </div>
         </div>
 
-        <!-- Policies Tab -->
+
         <div id="policies" class="tab-content">
             <div class="section-header">
                 <h2>My Insurance Policies</h2>
@@ -657,7 +630,7 @@
             </div>
         </div>
 
-        <!-- Claims Tab -->
+
         <div id="claims" class="tab-content">
             <div class="section-header">
                 <h2>My Claims</h2>
@@ -669,7 +642,7 @@
             </div>
         </div>
 
-        <!-- Requests Tab -->
+
         <div id="requests" class="tab-content">
             <div class="section-header">
                 <h2>My Requests</h2>
@@ -680,7 +653,7 @@
             </div>
         </div>
 
-        <!-- Profile Tab -->
+
         <div id="profile" class="tab-content">
             <div class="section-header">
                 <h2>My Profile</h2>
@@ -703,7 +676,7 @@
     </div>
 </div>
 
-<!-- Request Vehicle Modal -->
+
 <div id="requestVehicleModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -744,7 +717,7 @@
     </div>
 </div>
 
-<!-- Request Policy Modal -->
+
 <div id="requestPolicyModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -778,7 +751,7 @@
     </div>
 </div>
 
-<!-- File Claim Modal -->
+
 <div id="fileClaimModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -814,149 +787,141 @@
 
 <script>
     const API_BASE_URL = 'http://localhost:8099';
-    let currentCustomer = null;
+let currentCustomer = null;
 
-    // Login Form Handler
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+// Check authentication on page load
+window.onload = async () => {
+    const customerId = sessionStorage.getItem('customerId');
+    const token = sessionStorage.getItem('token');
 
-        const email = document.getElementById('loginEmail').value;
-        const customerId = document.getElementById('loginCustomerId').value;
+    if (!customerId || !token) {
+        // No authentication found, redirect to login
+        window.location.href = '/';
+        return;
+    }
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/customers/${customerId}`);
+    try {
+        // Fetch customer data
+        const response = await fetch(`${API_BASE_URL}/customers/${customerId}`);
 
-            if (response.ok) {
-                const customer = await response.json();
+        if (response.ok) {
+            currentCustomer = await response.json();
+            document.getElementById('authLoading').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+            document.getElementById('customerName').textContent = currentCustomer.name;
 
-                if (customer.email.toLowerCase() === email.toLowerCase()) {
-                    currentCustomer = customer;
-                    showDashboard();
-                } else {
-                    showLoginAlert('Invalid email or customer ID', 'error');
-                }
-            } else {
-                showLoginAlert('Customer not found', 'error');
-            }
-        } catch (error) {
-            showLoginAlert('Error: ' + error.message, 'error');
+    loadOverview();
+        } else {
+            // Customer not found, redirect to login
+            sessionStorage.clear();
+            window.location.href = '/';
         }
-    });
-
-    function showDashboard() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('dashboardScreen').style.display = 'block';
-        document.getElementById('customerName').textContent = currentCustomer.name;
-        loadOverview();
+    } catch (error) {
+        console.error('Error loading customer:', error);
+        sessionStorage.clear();
+        window.location.href = '/';
     }
+};
 
-    function logout() {
-        currentCustomer = null;
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('dashboardScreen').style.display = 'none';
-        document.getElementById('loginForm').reset();
-    }
+function logout() {
+    sessionStorage.clear();
+    window.location.href = '/';
+}
 
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
         const onclickAttr = tab.getAttribute('onclick');
         if (onclickAttr && onclickAttr.includes(`'${tabName}'`)) {
             tab.classList.add('active');
         }
     });
-        document.getElementById(tabName).classList.add('active');
+    document.getElementById(tabName).classList.add('active');
 
-        if (tabName === 'overview') loadOverview();
-        if (tabName === 'vehicles') loadMyVehicles();
-        if (tabName === 'policies') loadMyPolicies();
-        if (tabName === 'claims') loadMyClaims();
-        if (tabName === 'requests') loadMyRequests();
-        if (tabName === 'profile') loadProfile();
+    if (tabName === 'overview') loadOverview();
+    if (tabName === 'vehicles') loadMyVehicles();
+    if (tabName === 'policies') loadMyPolicies();
+    if (tabName === 'claims') loadMyClaims();
+    if (tabName === 'requests') loadMyRequests();
+    if (tabName === 'profile') loadProfile();
+}
+
+function showAlert(elementId, message, type) {
+    const alertDiv = document.getElementById(elementId);
+    alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    setTimeout(() => alertDiv.innerHTML = '', 5000);
+}
+
+// Load Overview
+async function loadOverview() {
+    try {
+        const [vehicles, policies, claims, requests] = await Promise.all([
+            fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/claims/customer/${currentCustomer.customerId}`).then(r => r.json()),
+            fetch(`${API_BASE_URL}/approvals/customer/${currentCustomer.customerId}`).then(r => r.json())
+        ]);
+
+        const activePolicies = policies.filter(p => p.policyStatus === 'ACTIVE');
+        const pendingRequests = requests.filter(r => r.status === 'PENDING');
+
+        document.getElementById('totalVehicles').textContent = vehicles.length;
+        document.getElementById('totalPolicies').textContent = activePolicies.length;
+        document.getElementById('totalClaims').textContent = claims.length;
+        document.getElementById('pendingRequests').textContent = pendingRequests.length;
+    } catch (error) {
+        console.error('Error loading overview:', error);
     }
+}
 
-    function showLoginAlert(message, type) {
-        const alertDiv = document.getElementById('loginAlert');
-        alertDiv.innerHTML = `<div class="alert alert-${type}" style="margin-top: 20px;">${message}</div>`;
-        setTimeout(() => alertDiv.innerHTML = '', 5000);
-    }
+// Load My Vehicles
+async function loadMyVehicles() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`);
+        const vehicles = await response.json();
 
-    function showAlert(elementId, message, type) {
-        const alertDiv = document.getElementById(elementId);
-        alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-        setTimeout(() => alertDiv.innerHTML = '', 5000);
-    }
+        const container = document.getElementById('vehiclesGrid');
 
-    // Load Overview
-    async function loadOverview() {
-        try {
-            const [vehicles, policies, claims, requests] = await Promise.all([
-                fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`).then(r => r.json()),
-                fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`).then(r => r.json()),
-                fetch(`${API_BASE_URL}/claims/customer/${currentCustomer.customerId}`).then(r => r.json()),
-                fetch(`${API_BASE_URL}/approvals/customer/${currentCustomer.customerId}`).then(r => r.json())
-            ]);
-
-            const activePolicies = policies.filter(p => p.policyStatus === 'ACTIVE');
-            const pendingRequests = requests.filter(r => r.status === 'PENDING');
-
-            document.getElementById('totalVehicles').textContent = vehicles.length;
-            document.getElementById('totalPolicies').textContent = activePolicies.length;
-            document.getElementById('totalClaims').textContent = claims.length;
-            document.getElementById('pendingRequests').textContent = pendingRequests.length;
-        } catch (error) {
-            console.error('Error loading overview:', error);
+        if (vehicles.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Vehicles Found</h3>
+                    <p>Request vehicle registration to get started.</p>
+                </div>
+            `;
+            return;
         }
-    }
 
-    // Load My Vehicles
-    async function loadMyVehicles() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`);
-            const vehicles = await response.json();
-
-            const container = document.getElementById('vehiclesGrid');
-
-            if (vehicles.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No Vehicles Found</h3>
-                        <p>Request vehicle registration to get started.</p>
+        container.innerHTML = vehicles.map(vehicle => `
+            <div class="vehicle-card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">${vehicle.make} ${vehicle.model}</div>
+                        <div class="card-subtitle">${vehicle.registrationNumber}</div>
                     </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = vehicles.map(vehicle => `
-                <div class="vehicle-card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">${vehicle.make} ${vehicle.model}</div>
-                            <div class="card-subtitle">${vehicle.registrationNumber}</div>
-                        </div>
-                        <div style="font-size: 32px;">🚗</div>
+                    <div style="font-size: 32px;">🚗</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-info">
+                        <span class="card-label">Type</span>
+                        <span class="card-value">${vehicle.vehicleType}</span>
                     </div>
-                    <div class="card-body">
-                        <div class="card-info">
-                            <span class="card-label">Type</span>
-                            <span class="card-value">${vehicle.vehicleType}</span>
-                        </div>
-                        <div class="card-info">
-                            <span class="card-label">Year</span>
-                            <span class="card-value">${vehicle.yearOfManufacture}</span>
-                        </div>
+                    <div class="card-info">
+                        <span class="card-label">Year</span>
+                        <span class="card-value">${vehicle.yearOfManufacture}</span>
                     </div>
                 </div>
-            `).join('');
-        } catch (error) {
-            console.error('Error loading vehicles:', error);
-        }
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
     }
+}
 
-    // Load My Policies
+// Load My Policies
 async function loadMyPolicies() {
     try {
         const response = await fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`);
@@ -1173,6 +1138,7 @@ document.getElementById('requestVehicleForm').addEventListener('submit', async (
             closeRequestVehicleModal();
             loadMyRequests();
             loadOverview();
+            switchTab('requests');
         } else {
             const error = await response.json();
             showAlert('requestAlert', 'Failed: ' + (error.error || 'Unknown error'), 'error');
@@ -1364,5 +1330,3 @@ async function downloadMyReport() {
     }
 }
 </script>
-</body>
-</html>

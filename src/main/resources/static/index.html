@@ -391,104 +391,114 @@
         document.getElementById(tabName).classList.add('active');
     }
 
-    // Login Form
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // In customer-login.html, update the login form handler
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const loginBtn = document.getElementById('loginBtn');
-        const alertDiv = document.getElementById('loginAlert');
+    const loginBtn = document.getElementById('loginBtn');
+    const alertDiv = document.getElementById('loginAlert');
 
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
 
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Signing in...';
-        alertDiv.innerHTML = '';
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing in...';
+    alertDiv.innerHTML = '';
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (response.ok) {
-                if (data.role !== 'CUSTOMER') {
-                    alertDiv.innerHTML = '<div class="alert alert-error">This portal is for customers only.</div>';
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Sign In';
-                    return;
-                }
-
-                alertDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
-
-                setTimeout(() => {
-                    window.location.href = '/customer/customer-dashboard.html';
-                }, 1000);
-            } else {
-                alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Login failed'}</div>`;
+        if (response.ok) {
+            if (data.role !== 'CUSTOMER') {
+                alertDiv.innerHTML = '<div class="alert alert-error">This portal is for customers only.</div>';
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';
+                return;
             }
-        } catch (error) {
-            alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
+
+            // Store authentication data
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('customerId', data.customerId);
+            sessionStorage.setItem('username', data.username);
+
+            alertDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
+
+            setTimeout(() => {
+                window.location.href = '/customer/customer-dashboard.html';
+            }, 1000);
+        } else {
+            alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Login failed'}</div>`;
             loginBtn.disabled = false;
             loginBtn.textContent = 'Sign In';
         }
-    });
+    } catch (error) {
+        alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+    }
+});
 
-    // Register Form
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // Update the register form handler
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const registerBtn = document.getElementById('registerBtn');
-        const alertDiv = document.getElementById('registerAlert');
+    const registerBtn = document.getElementById('registerBtn');
+    const alertDiv = document.getElementById('registerAlert');
 
-        const requestData = {
-            name: document.getElementById('regName').value,
-            email: document.getElementById('regEmail').value,
-            phone: document.getElementById('regPhone').value,
-            address: document.getElementById('regAddress').value,
-            username: document.getElementById('regUsername').value,
-            password: document.getElementById('regPassword').value,
-            role: 'CUSTOMER'
-        };
+    const requestData = {
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        phone: document.getElementById('regPhone').value,
+        address: document.getElementById('regAddress').value,
+        username: document.getElementById('regUsername').value,
+        password: document.getElementById('regPassword').value,
+        role: 'CUSTOMER'
+    };
 
-        registerBtn.disabled = true;
-        registerBtn.textContent = 'Creating account...';
-        alertDiv.innerHTML = '';
+    registerBtn.disabled = true;
+    registerBtn.textContent = 'Creating account...';
+    alertDiv.innerHTML = '';
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData)
-            });
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (response.ok) {
-                // Show success modal with Customer ID
-                document.getElementById('displayCustomerId').textContent = data.customerId;
-                document.getElementById('successModal').classList.add('active');
+        if (response.ok) {
+            // Store authentication data
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('customerId', data.customerId);
+            sessionStorage.setItem('username', data.username);
 
-                // Store token and redirect on button click
-                document.getElementById('continueBtn').onclick = () => {
-                    window.location.href = '/customer/customer-dashboard.html';
-                };
-            } else {
-                alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Registration failed'}</div>`;
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'Create Account';
-            }
-        } catch (error) {
-            alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
+            // Show success modal with Customer ID
+            document.getElementById('displayCustomerId').textContent = data.customerId;
+            document.getElementById('successModal').classList.add('active');
+
+            // Redirect on button click
+            document.getElementById('continueBtn').onclick = () => {
+                window.location.href = '/customer/customer-dashboard.html';
+            };
+        } else {
+            alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Registration failed'}</div>`;
             registerBtn.disabled = false;
             registerBtn.textContent = 'Create Account';
         }
-    });
+    } catch (error) {
+        alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Create Account';
+    }
+});
 
     // Check if already logged in
     window.onload = () => {
