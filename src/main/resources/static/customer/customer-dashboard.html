@@ -657,7 +657,10 @@
         <div id="profile" class="tab-content">
             <div class="section-header">
                 <h2>My Profile</h2>
-                <button class="btn btn-secondary" onclick="downloadMyReport()">📄 Download My Report</button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="downloadMyReport('pdf')">📄 Download PDF</button>
+                    <button class="btn btn-secondary" onclick="downloadMyReport('csv')">📊 Download CSV</button>
+                </div>
             </div>
             <div class="profile-card">
                 <div class="profile-info">
@@ -1401,16 +1404,20 @@ function closeExcessWarningModal() {
 document.getElementById('claimDate').max = new Date().toISOString().split('T')[0];
 
 // Download customer report
-async function downloadMyReport() {
+async function downloadMyReport(format = 'pdf') {
     try {
-        const response = await fetch(`${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download`);
+        const endpoint = format === 'csv'
+            ? `${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download/csv`
+            : `${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download`;
+
+        const response = await fetch(endpoint);
 
         if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `customer_${currentCustomer.customerId}_report.pdf`;
+            a.download = `customer_${currentCustomer.customerId}_report.${format}`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);

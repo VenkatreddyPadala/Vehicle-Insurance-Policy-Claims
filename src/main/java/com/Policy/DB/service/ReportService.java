@@ -20,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.StringWriter;
+import com.opencsv.CSVWriter;
 
 @Service
 @Transactional(readOnly = true)
@@ -412,5 +414,137 @@ public class ReportService {
         valueCell.setBorder(Rectangle.NO_BORDER);
         valueCell.setPadding(5);
         table.addCell(valueCell);
+    }
+    public byte[] generateClaimReportCsv() {
+        try {
+            List<Claim> allClaims = claimRepository.findAll();
+
+            StringWriter writer = new StringWriter();
+            CSVWriter csvWriter = new CSVWriter(writer);
+
+            // Header
+            String[] header = {"Claim ID", "Policy Number", "Customer Name", "Amount", "Date", "Status", "Reason"};
+            csvWriter.writeNext(header);
+
+            // Data rows
+            for (Claim claim : allClaims) {
+                String[] row = {
+                        String.valueOf(claim.getClaimId()),
+                        claim.getPolicy() != null ? claim.getPolicy().getPolicyNumber() : "N/A",
+                        claim.getPolicy() != null && claim.getPolicy().getVehicle() != null &&
+                                claim.getPolicy().getVehicle().getCustomer() != null ?
+                                claim.getPolicy().getVehicle().getCustomer().getName() : "N/A",
+                        claim.getClaimAmount().toString(),
+                        claim.getClaimDate().toString(),
+                        claim.getClaimStatus().toString(),
+                        claim.getClaimReason()
+                };
+                csvWriter.writeNext(row);
+            }
+
+            csvWriter.close();
+            return writer.toString().getBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating claim report CSV", e);
+        }
+    }
+
+    // Generate policy report (CSV)
+    public byte[] generatePolicyReportCsv() {
+        try {
+            List<Policy> allPolicies = policyRepository.findAll();
+
+            StringWriter writer = new StringWriter();
+            CSVWriter csvWriter = new CSVWriter(writer);
+
+            // Header
+            String[] header = {"Policy ID", "Policy Number", "Customer Name", "Vehicle", "Coverage", "Premium", "Start Date", "End Date", "Status"};
+            csvWriter.writeNext(header);
+
+            // Data rows
+            for (Policy policy : allPolicies) {
+                String[] row = {
+                        String.valueOf(policy.getPolicyId()),
+                        policy.getPolicyNumber(),
+                        policy.getVehicle() != null && policy.getVehicle().getCustomer() != null ?
+                                policy.getVehicle().getCustomer().getName() : "N/A",
+                        policy.getVehicle() != null ?
+                                policy.getVehicle().getMake() + " " + policy.getVehicle().getModel() : "N/A",
+                        policy.getCoverageAmount().toString(),
+                        policy.getPremiumAmount().toString(),
+                        policy.getStartDate().toString(),
+                        policy.getEndDate().toString(),
+                        policy.getPolicyStatus().toString()
+                };
+                csvWriter.writeNext(row);
+            }
+
+            csvWriter.close();
+            return writer.toString().getBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating policy report CSV", e);
+        }
+    }
+
+    // Generate customer report (CSV)
+    public byte[] generateCustomerReportCsv(Integer customerId) {
+        try {
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+            List<Policy> customerPolicies = policyRepository.findByCustomerId(customerId);
+            List<Claim> customerClaims = claimRepository.findByCustomerId(customerId);
+
+            StringWriter writer = new StringWriter();
+            CSVWriter csvWriter = new CSVWriter(writer);
+
+            // Customer Info Section
+            csvWriter.writeNext(new String[]{"CUSTOMER INFORMATION"});
+            csvWriter.writeNext(new String[]{"Customer ID", String.valueOf(customer.getCustomerId())});
+            csvWriter.writeNext(new String[]{"Name", customer.getName()});
+            csvWriter.writeNext(new String[]{"Email", customer.getEmail()});
+            csvWriter.writeNext(new String[]{"Phone", customer.getPhone()});
+            csvWriter.writeNext(new String[]{""}); // Empty line
+
+            // Policies Section
+            csvWriter.writeNext(new String[]{"POLICIES"});
+            csvWriter.writeNext(new String[]{"Policy Number", "Vehicle", "Coverage", "Premium", "Start Date", "End Date", "Status"});
+
+            for (Policy policy : customerPolicies) {
+                String[] row = {
+                        policy.getPolicyNumber(),
+                        policy.getVehicle() != null ?
+                                policy.getVehicle().getMake() + " " + policy.getVehicle().getModel() : "N/A",
+                        policy.getCoverageAmount().toString(),
+                        policy.getPremiumAmount().toString(),
+                        policy.getStartDate().toString(),
+                        policy.getEndDate().toString(),
+                        policy.getPolicyStatus().toString()
+                };
+                csvWriter.writeNext(row);
+            }
+
+            csvWriter.writeNext(new String[]{""}); // Empty line
+
+            // Claims Section
+            csvWriter.writeNext(new String[]{"CLAIMS"});
+            csvWriter.writeNext(new String[]{"Policy Number", "Amount", "Date", "Status", "Reason"});
+
+            for (Claim claim : customerClaims) {
+                String[] row = {
+                        claim.getPolicy() != null ? claim.getPolicy().getPolicyNumber() : "N/A",
+                        claim.getClaimAmount().toString(),
+                        claim.getClaimDate().toString(),
+                        claim.getClaimStatus().toString(),
+                        claim.getClaimReason()
+                };
+                csvWriter.writeNext(row);
+            }
+
+            csvWriter.close();
+            return writer.toString().getBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating customer report CSV", e);
+        }
     }
 }

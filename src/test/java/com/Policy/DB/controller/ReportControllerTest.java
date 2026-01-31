@@ -305,4 +305,127 @@ class ReportControllerTest {
 
         verify(reportService, times(1)).generateCustomerReportPdf(999999);
     }
+    // ============================
+// Claim Report Tests (CSV Download)
+// ============================
+
+    @Test
+    void downloadClaimReportCsv_success() throws Exception {
+        byte[] csvContent = "Claim ID,Policy Number,Customer Name,Amount,Date,Status,Reason\n1,POL123,John Doe,5000,2024-01-15,APPROVED,Accident".getBytes();
+
+        Mockito.when(reportService.generateClaimReportCsv()).thenReturn(csvContent);
+
+        mockMvc.perform(get("/reports/claims/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "text/csv"))
+                .andExpect(header().string("Content-Disposition", "form-data; name=\"attachment\"; filename=\"claim_report.csv\""))
+                .andExpect(content().bytes(csvContent));
+
+        verify(reportService, times(1)).generateClaimReportCsv();
+    }
+
+    @Test
+    void downloadClaimReportCsv_emptyCsv() throws Exception {
+        byte[] emptyCsv = "Claim ID,Policy Number,Customer Name,Amount,Date,Status,Reason\n".getBytes();
+
+        Mockito.when(reportService.generateClaimReportCsv()).thenReturn(emptyCsv);
+
+        mockMvc.perform(get("/reports/claims/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(emptyCsv));
+
+        verify(reportService, times(1)).generateClaimReportCsv();
+    }
+
+// ============================
+// Policy Report Tests (CSV Download)
+// ============================
+
+    @Test
+    void downloadPolicyReportCsv_success() throws Exception {
+        byte[] csvContent = "Policy ID,Policy Number,Customer Name,Vehicle,Coverage,Premium,Start Date,End Date,Status\n1,POL123,John Doe,Honda Civic,50000,1500,2024-01-01,2025-01-01,ACTIVE".getBytes();
+
+        Mockito.when(reportService.generatePolicyReportCsv()).thenReturn(csvContent);
+
+        mockMvc.perform(get("/reports/policies/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "text/csv"))
+                .andExpect(header().string("Content-Disposition", "form-data; name=\"attachment\"; filename=\"policy_report.csv\""))
+                .andExpect(content().bytes(csvContent));
+
+        verify(reportService, times(1)).generatePolicyReportCsv();
+    }
+
+    @Test
+    void downloadPolicyReportCsv_emptyCsv() throws Exception {
+        byte[] emptyCsv = "Policy ID,Policy Number,Customer Name,Vehicle,Coverage,Premium,Start Date,End Date,Status\n".getBytes();
+
+        Mockito.when(reportService.generatePolicyReportCsv()).thenReturn(emptyCsv);
+
+        mockMvc.perform(get("/reports/policies/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(emptyCsv));
+
+        verify(reportService, times(1)).generatePolicyReportCsv();
+    }
+
+// ============================
+// Customer Report Tests (CSV Download)
+// ============================
+
+    @Test
+    void downloadCustomerReportCsv_success() throws Exception {
+        byte[] csvContent = "CUSTOMER INFORMATION\nCustomer ID,1\nName,John Doe\nEmail,john@test.com\nPhone,9999999999".getBytes();
+
+        Mockito.when(reportService.generateCustomerReportCsv(1)).thenReturn(csvContent);
+
+        mockMvc.perform(get("/reports/customer/1/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "text/csv"))
+                .andExpect(header().string("Content-Disposition", "form-data; name=\"attachment\"; filename=\"customer_1_report.csv\""))
+                .andExpect(content().bytes(csvContent));
+
+        verify(reportService, times(1)).generateCustomerReportCsv(1);
+    }
+
+    @Test
+    void downloadCustomerReportCsv_differentCustomerId() throws Exception {
+        byte[] csvContent = "CUSTOMER INFORMATION\nCustomer ID,99\nName,Jane Smith".getBytes();
+
+        Mockito.when(reportService.generateCustomerReportCsv(99)).thenReturn(csvContent);
+
+        mockMvc.perform(get("/reports/customer/99/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "text/csv"))
+                .andExpect(header().string("Content-Disposition", "form-data; name=\"attachment\"; filename=\"customer_99_report.csv\""))
+                .andExpect(content().bytes(csvContent));
+
+        verify(reportService, times(1)).generateCustomerReportCsv(99);
+    }
+
+    @Test
+    void downloadCustomerReportCsv_emptyCsv() throws Exception {
+        byte[] emptyCsv = new byte[0];
+
+        Mockito.when(reportService.generateCustomerReportCsv(1)).thenReturn(emptyCsv);
+
+        mockMvc.perform(get("/reports/customer/1/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(emptyCsv));
+
+        verify(reportService, times(1)).generateCustomerReportCsv(1);
+    }
+
+    @Test
+    void downloadCustomerReportCsv_largeCustomerId() throws Exception {
+        byte[] csvContent = "CSV for large ID".getBytes();
+
+        Mockito.when(reportService.generateCustomerReportCsv(999999)).thenReturn(csvContent);
+
+        mockMvc.perform(get("/reports/customer/999999/download/csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "form-data; name=\"attachment\"; filename=\"customer_999999_report.csv\""));
+
+        verify(reportService, times(1)).generateCustomerReportCsv(999999);
+    }
 }
