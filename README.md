@@ -214,8 +214,10 @@ java -jar target/DB-0.0.1.jar
 ### Access the Application
 
 - **Backend API**: http://localhost:8099
+- **Customer Login/Register**: http://localhost:8099/
 - **Customer Dashboard**: http://localhost:8099/customer-dashboard.html
-- **Admin Dashboard**: http://localhost:8099/admin-dashboard.html
+- **Admin Login**: http://localhost:8099/admin/admin-login.html
+- **Admin Dashboard**: http://localhost:8099/admin/admin-dashboard.html
 
 ## 🔌 API Endpoints
 
@@ -411,10 +413,11 @@ The following packages are excluded from coverage:
 - Claims filing and tracking
 - Request status monitoring
 - Profile management
+- Reports in PDF and CSV
 
 **Login Requirements:**
 - Email address
-- Customer ID
+- Password
 
 ### Admin Dashboard
 
