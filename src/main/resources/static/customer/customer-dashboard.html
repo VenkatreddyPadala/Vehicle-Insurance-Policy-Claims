@@ -657,7 +657,10 @@
         <div id="profile" class="tab-content">
             <div class="section-header">
                 <h2>My Profile</h2>
-                <button class="btn btn-secondary" onclick="downloadMyReport()">📄 Download My Report</button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="downloadMyReport('pdf')">📄 Download PDF</button>
+                    <button class="btn btn-secondary" onclick="downloadMyReport('csv')">📊 Download CSV</button>
+                </div>
             </div>
             <div class="profile-card">
                 <div class="profile-info">
@@ -784,10 +787,39 @@
         </form>
     </div>
 </div>
+<!-- Excess Claim Warning Modal -->
+<div id="excessClaimWarningModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⚠️ Claim Exceeds Coverage</h3>
+            <span class="close-btn" onclick="closeExcessWarningModal()">&times;</span>
+        </div>
+        <div style="padding: 40px;">
+            <div style="background: #fff3e0; padding: 24px; border-radius: 6px; margin-bottom: 24px; border-left: 4px solid #ff9800;">
+                <p style="font-size: 15px; color: #e65100; margin-bottom: 12px; font-weight: 600;">
+                    Warning: Claim Amount Exceeds Policy Coverage
+                </p>
+                <p style="font-size: 14px; color: #666; margin-bottom: 16px;">
+                    Your claim amount of <strong id="excessClaimAmount">₹0</strong> is greater than your policy coverage of <strong id="policyCoverageAmount">₹0</strong>.
+                </p>
+                <p style="font-size: 13px; color: #666;">
+                    This claim will be subject to special review and may be partially approved up to the coverage limit.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeExcessWarningModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="proceedWithExcessClaim()">Proceed Anyway</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const API_BASE_URL = 'http://localhost:8099';
 let currentCustomer = null;
+let pendingClaimData = null;
+let selectedPolicyCoverage = 0;
 
 // Check authentication on page load
 window.onload = async () => {
@@ -1276,10 +1308,69 @@ document.getElementById('fileClaimForm').addEventListener('submit', async (e) =>
     e.preventDefault();
 
     const policyId = document.getElementById('claimPolicySelect').value;
+    const claimAmount = parseFloat(document.getElementById('claimAmount').value);
+    const claimDate = document.getElementById('claimDate').value;
+    const claimReason = document.getElementById('claimReason').value;
+
+    // Get the selected policy's coverage amount
+    try {
+        const response = await fetch(`${API_BASE_URL}/policies/customer/${currentCustomer.customerId}`);
+        const policies = await response.json();
+        const activePolicies = policies.filter(p => p.policyStatus === 'ACTIVE');
+        const selectedPolicy = activePolicies.find(p => p.policyId == policyId);
+
+        selectedPolicyCoverage = selectedPolicy ? selectedPolicy.coverageAmount : 0;
+
+        // Check if claim exceeds coverage
+        if (claimAmount > selectedPolicyCoverage) {
+            // Store pending claim data
+            pendingClaimData = {
+                policyId: policyId,
+                claimAmount: claimAmount,
+                claimDate: claimDate,
+                claimReason: claimReason
+            };
+
+            // Show warning modal
+            document.getElementById('excessClaimAmount').textContent = '₹' + claimAmount.toLocaleString();
+            document.getElementById('policyCoverageAmount').textContent = '₹' + selectedPolicyCoverage.toLocaleString();
+            document.getElementById('fileClaimModal').classList.remove('active');
+            document.getElementById('excessClaimWarningModal').classList.add('active');
+            return;
+        }
+
+        // If claim doesn't exceed coverage, submit directly
+        await submitClaim(policyId, claimAmount, claimDate, claimReason);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('claimAlert', 'Error: ' + error.message, 'error');
+    }
+});
+
+// Proceed with excess claim after warning
+function proceedWithExcessClaim() {
+    if (!pendingClaimData) {
+        alert('Error: No pending claim data');
+        return;
+    }
+
+    submitClaim(
+        pendingClaimData.policyId,
+        pendingClaimData.claimAmount,
+        pendingClaimData.claimDate,
+        pendingClaimData.claimReason
+    );
+
+    closeExcessWarningModal();
+}
+
+// Helper function to submit claim
+async function submitClaim(policyId, claimAmount, claimDate, claimReason) {
     const claim = {
-        claimAmount: parseFloat(document.getElementById('claimAmount').value),
-        claimDate: document.getElementById('claimDate').value,
-        claimReason: document.getElementById('claimReason').value
+        claimAmount: claimAmount,
+        claimDate: claimDate,
+        claimReason: claimReason
     };
 
     try {
@@ -1294,6 +1385,7 @@ document.getElementById('fileClaimForm').addEventListener('submit', async (e) =>
             closeFileClaimModal();
             loadMyClaims();
             loadOverview();
+            pendingClaimData = null;
         } else {
             const error = await response.text();
             showAlert('claimAlert', 'Failed to file claim: ' + error, 'error');
@@ -1301,22 +1393,31 @@ document.getElementById('fileClaimForm').addEventListener('submit', async (e) =>
     } catch (error) {
         showAlert('claimAlert', 'Error: ' + error.message, 'error');
     }
-});
+}
+
+function closeExcessWarningModal() {
+    document.getElementById('excessClaimWarningModal').classList.remove('active');
+    pendingClaimData = null;
+}
 
 // Set today's date as max for claim date
 document.getElementById('claimDate').max = new Date().toISOString().split('T')[0];
 
 // Download customer report
-async function downloadMyReport() {
+async function downloadMyReport(format = 'pdf') {
     try {
-        const response = await fetch(`${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download`);
+        const endpoint = format === 'csv'
+            ? `${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download/csv`
+            : `${API_BASE_URL}/reports/customer/${currentCustomer.customerId}/download`;
+
+        const response = await fetch(endpoint);
 
         if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `customer_${currentCustomer.customerId}_report.pdf`;
+            a.download = `customer_${currentCustomer.customerId}_report.${format}`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);

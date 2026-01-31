@@ -66,4 +66,38 @@ public class ReportController {
 
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
+    @GetMapping("/claims/download/csv")
+    public ResponseEntity<byte[]> downloadClaimReportCsv() {
+        byte[] csv = reportService.generateClaimReportCsv();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "claim_report.csv");
+
+        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+    }
+
+    // Download policy report as CSV
+    @GetMapping("/policies/download/csv")
+    public ResponseEntity<byte[]> downloadPolicyReportCsv() {
+        byte[] csv = reportService.generatePolicyReportCsv();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "policy_report.csv");
+
+        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+    }
+
+    // Download customer report as CSV
+    @GetMapping("/customer/{customerId}/download/csv")
+    public ResponseEntity<byte[]> downloadCustomerReportCsv(@PathVariable Integer customerId) {
+        byte[] csv = reportService.generateCustomerReportCsv(customerId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentDispositionFormData("attachment", "customer_" + customerId + "_report.csv");
+
+        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+    }
 }

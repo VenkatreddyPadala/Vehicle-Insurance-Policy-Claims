@@ -187,4 +187,298 @@ class ReportServiceTest {
         assertNotNull(pdf);
         assertTrue(pdf.length > 0);
     }
+    // ---------------- Claim Report (CSV) ----------------
+    @Test
+    void generateClaimReportCsv_success() {
+        // Arrange
+        Customer customer = new Customer();
+        customer.setName("John Doe");
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setCustomer(customer);
+
+        Policy policy = new Policy();
+        policy.setPolicyNumber("POL123");
+        policy.setVehicle(vehicle);
+
+        Claim claim = new Claim();
+        claim.setClaimId(1);
+        claim.setClaimAmount(BigDecimal.valueOf(5000));
+        claim.setClaimDate(java.time.LocalDate.now());
+        claim.setClaimStatus(ClaimStatus.APPROVED);
+        claim.setClaimReason("Accident damage");
+        claim.setPolicy(policy);
+
+        when(claimRepository.findAll()).thenReturn(List.of(claim));
+
+        // Act
+        byte[] csv = reportService.generateClaimReportCsv();
+
+        // Assert
+        assertNotNull(csv);
+        assertTrue(csv.length > 0);
+
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("Claim ID"));
+        assertTrue(csvContent.contains("POL123"));
+        assertTrue(csvContent.contains("John Doe"));
+        assertTrue(csvContent.contains("5000"));
+        assertTrue(csvContent.contains("APPROVED"));
+    }
+
+    @Test
+    void generateClaimReportCsv_emptyClaims() {
+        // Arrange
+        when(claimRepository.findAll()).thenReturn(List.of());
+
+        // Act
+        byte[] csv = reportService.generateClaimReportCsv();
+
+        // Assert
+        assertNotNull(csv);
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("Claim ID")); // Header should still be present
+    }
+
+    @Test
+    void generateClaimReportCsv_nullPolicyData() {
+        // Arrange
+        Claim claim = new Claim();
+        claim.setClaimId(1);
+        claim.setClaimAmount(BigDecimal.valueOf(1000));
+        claim.setClaimDate(java.time.LocalDate.now());
+        claim.setClaimStatus(ClaimStatus.SUBMITTED);
+        claim.setClaimReason("Test");
+        claim.setPolicy(null); // Null policy
+
+        when(claimRepository.findAll()).thenReturn(List.of(claim));
+
+        // Act
+        byte[] csv = reportService.generateClaimReportCsv();
+
+        // Assert
+        assertNotNull(csv);
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("N/A")); // Should handle null policy
+    }
+
+    // ---------------- Policy Report (CSV) ----------------
+    @Test
+    void generatePolicyReportCsv_success() {
+        // Arrange
+        Customer customer = new Customer();
+        customer.setName("Jane Smith");
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setMake("Honda");
+        vehicle.setModel("Civic");
+        vehicle.setCustomer(customer);
+
+        Policy policy = new Policy();
+        policy.setPolicyId(1);
+        policy.setPolicyNumber("POL456");
+        policy.setCoverageAmount(BigDecimal.valueOf(50000));
+        policy.setPremiumAmount(BigDecimal.valueOf(1500));
+        policy.setStartDate(java.time.LocalDate.now());
+        policy.setEndDate(java.time.LocalDate.now().plusYears(1));
+        policy.setPolicyStatus(PolicyStatus.ACTIVE);
+        policy.setVehicle(vehicle);
+
+        when(policyRepository.findAll()).thenReturn(List.of(policy));
+
+        // Act
+        byte[] csv = reportService.generatePolicyReportCsv();
+
+        // Assert
+        assertNotNull(csv);
+        assertTrue(csv.length > 0);
+
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("Policy ID"));
+        assertTrue(csvContent.contains("POL456"));
+        assertTrue(csvContent.contains("Jane Smith"));
+        assertTrue(csvContent.contains("Honda Civic"));
+        assertTrue(csvContent.contains("50000"));
+        assertTrue(csvContent.contains("ACTIVE"));
+    }
+
+    @Test
+    void generatePolicyReportCsv_emptyPolicies() {
+        // Arrange
+        when(policyRepository.findAll()).thenReturn(List.of());
+
+        // Act
+        byte[] csv = reportService.generatePolicyReportCsv();
+
+        // Assert
+        assertNotNull(csv);
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("Policy ID")); // Header should still be present
+    }
+
+    @Test
+    void generatePolicyReportCsv_nullVehicleData() {
+        // Arrange
+        Policy policy = new Policy();
+        policy.setPolicyId(1);
+        policy.setPolicyNumber("POL789");
+        policy.setCoverageAmount(BigDecimal.valueOf(30000));
+        policy.setPremiumAmount(BigDecimal.valueOf(1000));
+        policy.setStartDate(java.time.LocalDate.now());
+        policy.setEndDate(java.time.LocalDate.now().plusYears(1));
+        policy.setPolicyStatus(PolicyStatus.EXPIRED);
+        policy.setVehicle(null); // Null vehicle
+
+        when(policyRepository.findAll()).thenReturn(List.of(policy));
+
+        // Act
+        byte[] csv = reportService.generatePolicyReportCsv();
+
+        // Assert
+        assertNotNull(csv);
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("N/A")); // Should handle null vehicle
+    }
+
+    // ---------------- Customer Report (CSV) ----------------
+    @Test
+    void generateCustomerReportCsv_success() {
+        // Arrange
+        Customer customer = new Customer();
+        customer.setCustomerId(1);
+        customer.setName("Alice Brown");
+        customer.setEmail("alice@test.com");
+        customer.setPhone("8888888888");
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setMake("Toyota");
+        vehicle.setModel("Camry");
+
+        Policy policy = new Policy();
+        policy.setPolicyNumber("POL999");
+        policy.setCoverageAmount(BigDecimal.valueOf(40000));
+        policy.setPremiumAmount(BigDecimal.valueOf(1200));
+        policy.setStartDate(java.time.LocalDate.now());
+        policy.setEndDate(java.time.LocalDate.now().plusYears(1));
+        policy.setPolicyStatus(PolicyStatus.ACTIVE);
+        policy.setVehicle(vehicle);
+
+        Claim claim = new Claim();
+        claim.setClaimAmount(BigDecimal.valueOf(3000));
+        claim.setClaimDate(java.time.LocalDate.now());
+        claim.setClaimStatus(ClaimStatus.APPROVED);
+        claim.setClaimReason("Minor damage");
+        claim.setPolicy(policy);
+
+        when(customerRepository.findById(1)).thenReturn(Optional.of(customer));
+        when(policyRepository.findByCustomerId(1)).thenReturn(List.of(policy));
+        when(claimRepository.findByCustomerId(1)).thenReturn(List.of(claim));
+
+        // Act
+        byte[] csv = reportService.generateCustomerReportCsv(1);
+
+        // Assert
+        assertNotNull(csv);
+        assertTrue(csv.length > 0);
+
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("CUSTOMER INFORMATION"));
+        assertTrue(csvContent.contains("Alice Brown"));
+        assertTrue(csvContent.contains("alice@test.com"));
+        assertTrue(csvContent.contains("8888888888"));
+        assertTrue(csvContent.contains("POLICIES"));
+        assertTrue(csvContent.contains("POL999"));
+        assertTrue(csvContent.contains("CLAIMS"));
+        assertTrue(csvContent.contains("3000"));
+    }
+
+    @Test
+    void generateCustomerReportCsv_noPoliciesNoClaims() {
+        // Arrange
+        Customer customer = new Customer();
+        customer.setCustomerId(2);
+        customer.setName("Bob Wilson");
+        customer.setEmail("bob@test.com");
+        customer.setPhone("7777777777");
+
+        when(customerRepository.findById(2)).thenReturn(Optional.of(customer));
+        when(policyRepository.findByCustomerId(2)).thenReturn(List.of());
+        when(claimRepository.findByCustomerId(2)).thenReturn(List.of());
+
+        // Act
+        byte[] csv = reportService.generateCustomerReportCsv(2);
+
+        // Assert
+        assertNotNull(csv);
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("Bob Wilson"));
+        assertTrue(csvContent.contains("POLICIES"));
+        assertTrue(csvContent.contains("CLAIMS"));
+    }
+
+    @Test
+    void generateCustomerReportCsv_customerNotFound() {
+        // Arrange
+        when(customerRepository.findById(999)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> {
+            reportService.generateCustomerReportCsv(999);
+        });
+    }
+
+    @Test
+    void generateCustomerReportCsv_multiplePoliciesAndClaims() {
+        // Arrange
+        Customer customer = new Customer();
+        customer.setCustomerId(3);
+        customer.setName("Charlie Davis");
+        customer.setEmail("charlie@test.com");
+        customer.setPhone("6666666666");
+
+        Policy policy1 = new Policy();
+        policy1.setPolicyNumber("POL001");
+        policy1.setCoverageAmount(BigDecimal.valueOf(50000));
+        policy1.setPremiumAmount(BigDecimal.valueOf(1500));
+        policy1.setStartDate(java.time.LocalDate.now());
+        policy1.setEndDate(java.time.LocalDate.now().plusYears(1));
+        policy1.setPolicyStatus(PolicyStatus.ACTIVE);
+
+        Policy policy2 = new Policy();
+        policy2.setPolicyNumber("POL002");
+        policy2.setCoverageAmount(BigDecimal.valueOf(30000));
+        policy2.setPremiumAmount(BigDecimal.valueOf(1000));
+        policy2.setStartDate(java.time.LocalDate.now());
+        policy2.setEndDate(java.time.LocalDate.now().plusYears(1));
+        policy2.setPolicyStatus(PolicyStatus.EXPIRED);
+
+        Claim claim1 = new Claim();
+        claim1.setClaimAmount(BigDecimal.valueOf(2000));
+        claim1.setClaimDate(java.time.LocalDate.now());
+        claim1.setClaimStatus(ClaimStatus.APPROVED);
+        claim1.setClaimReason("Claim 1");
+        claim1.setPolicy(policy1);
+
+        Claim claim2 = new Claim();
+        claim2.setClaimAmount(BigDecimal.valueOf(1500));
+        claim2.setClaimDate(java.time.LocalDate.now());
+        claim2.setClaimStatus(ClaimStatus.SUBMITTED);
+        claim2.setClaimReason("Claim 2");
+        claim2.setPolicy(policy2);
+
+        when(customerRepository.findById(3)).thenReturn(Optional.of(customer));
+        when(policyRepository.findByCustomerId(3)).thenReturn(List.of(policy1, policy2));
+        when(claimRepository.findByCustomerId(3)).thenReturn(List.of(claim1, claim2));
+
+        // Act
+        byte[] csv = reportService.generateCustomerReportCsv(3);
+
+        // Assert
+        assertNotNull(csv);
+        String csvContent = new String(csv);
+        assertTrue(csvContent.contains("POL001"));
+        assertTrue(csvContent.contains("POL002"));
+        assertTrue(csvContent.contains("2000"));
+        assertTrue(csvContent.contains("1500"));
+    }
 }
