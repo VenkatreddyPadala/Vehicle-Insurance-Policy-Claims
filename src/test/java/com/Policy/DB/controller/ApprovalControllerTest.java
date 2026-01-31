@@ -443,4 +443,70 @@ class ApprovalControllerTest {
 
         verify(approvalService, times(1)).getCustomerRequests(customerId);
     }
+    @Test
+    void testUpdateVehicleRequest_Success() throws Exception {
+        VehicleRequestDTO dto = new VehicleRequestDTO();
+        dto.setRegistrationNumber("NEW123");
+
+        ApprovalRequest updated = createSampleApprovalRequest();
+
+        when(approvalService.updateRequest(eq(1), any(VehicleRequestDTO.class)))
+                .thenReturn(updated);
+
+        mockMvc.perform(put("/approvals/update/vehicle/{id}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestId").value(1));
+    }
+    @Test
+    void testUpdateVehicleRequest_Forbidden() throws Exception {
+        when(approvalService.updateRequest(eq(1), any()))
+                .thenThrow(new IllegalStateException("Request already processed"));
+
+        mockMvc.perform(put("/approvals/update/vehicle/{id}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Request already processed"));
+    }
+    @Test
+    void testDeleteRequest_Success() throws Exception {
+        doNothing().when(approvalService).deleteRequest(1);
+
+        mockMvc.perform(delete("/approvals/delete/{id}", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message")
+                        .value("Request deleted successfully"));
+    }
+    @Test
+    void testDeleteRequest_Forbidden() throws Exception {
+        doThrow(new IllegalStateException("Cannot delete processed request"))
+                .when(approvalService).deleteRequest(1);
+
+        mockMvc.perform(delete("/approvals/delete/{id}", 1))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error")
+                        .value("Cannot delete processed request"));
+    }
+    @Test
+    void testGetRequestById_Success() throws Exception {
+        ApprovalRequestDTO dto = createSampleApprovalRequestDTO();
+
+        when(approvalService.getRequestById(1)).thenReturn(dto);
+
+        mockMvc.perform(get("/approvals/{id}", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestId").value(1));
+    }
+    @Test
+    void testGetRequestById_NotFound() throws Exception {
+        when(approvalService.getRequestById(99))
+                .thenThrow(new RuntimeException("Request not found"));
+
+        mockMvc.perform(get("/approvals/{id}", 99))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Request not found"));
+    }
+
 }
