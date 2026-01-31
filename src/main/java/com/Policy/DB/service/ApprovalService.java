@@ -44,8 +44,6 @@ public class ApprovalService {
         this.objectMapper.registerModule(new JavaTimeModule());
     }
 
-    // Rest of your code remains the same...
-
     // Submit vehicle registration request
     public ApprovalRequest submitVehicleRequest(Integer customerId, VehicleRequestDTO vehicleRequest) {
         Customer customer = customerRepository.findById(customerId)
@@ -90,6 +88,75 @@ public class ApprovalService {
         }
     }
 
+    // UPDATE: Edit existing request (only if PENDING)
+    public ApprovalRequest updateRequest(Integer requestId, VehicleRequestDTO vehicleRequest) {
+        ApprovalRequest request = approvalRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        // Only allow updating PENDING requests
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be updated");
+        }
+
+        // Verify request type matches
+        if (request.getRequestType() != RequestType.VEHICLE_REGISTRATION) {
+            throw new IllegalStateException("Invalid request type for vehicle update");
+        }
+
+        try {
+            request.setRequestData(objectMapper.writeValueAsString(vehicleRequest));
+            request.setCreatedAt(LocalDateTime.now()); // Update timestamp to reflect modification
+            return approvalRequestRepository.save(request);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update vehicle request: " + e.getMessage());
+        }
+    }
+
+    // UPDATE: Edit existing policy request (only if PENDING)
+    public ApprovalRequest updatePolicyRequest(Integer requestId, PolicyRequestDTO policyRequest) {
+        ApprovalRequest request = approvalRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        // Only allow updating PENDING requests
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be updated");
+        }
+
+        // Verify request type matches
+        if (request.getRequestType() != RequestType.POLICY_CREATION) {
+            throw new IllegalStateException("Invalid request type for policy update");
+        }
+
+        // Verify vehicle belongs to customer
+        Vehicle vehicle = vehicleRepository.findById(policyRequest.getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+
+        if (!vehicle.getCustomer().getCustomerId().equals(request.getCustomer().getCustomerId())) {
+            throw new RuntimeException("Vehicle does not belong to this customer");
+        }
+
+        try {
+            request.setRequestData(objectMapper.writeValueAsString(policyRequest));
+            request.setCreatedAt(LocalDateTime.now()); // Update timestamp to reflect modification
+            return approvalRequestRepository.save(request);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update policy request: " + e.getMessage());
+        }
+    }
+
+    // DELETE: Delete request (only if PENDING)
+    public void deleteRequest(Integer requestId) {
+        ApprovalRequest request = approvalRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        // Only allow deleting PENDING requests
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be deleted");
+        }
+
+        approvalRequestRepository.delete(request);
+    }
+
     // Get all pending requests (for admin)
     public List<ApprovalRequestDTO> getPendingRequests() {
         return approvalRequestRepository.findByStatus(RequestStatus.PENDING)
@@ -112,6 +179,13 @@ public class ApprovalService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Get request by ID
+    public ApprovalRequestDTO getRequestById(Integer requestId) {
+        ApprovalRequest request = approvalRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+        return convertToDTO(request);
     }
 
     // Process request (approve/reject)

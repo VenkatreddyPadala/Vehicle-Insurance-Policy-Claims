@@ -151,6 +151,24 @@
             background: #e5e5e5;
         }
 
+        .btn-warning {
+            background: #f57c00;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e65100;
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+
         .btn-block {
             width: 100%;
             margin-right: 0;
@@ -433,6 +451,12 @@
             color: white;
         }
 
+        .alert-warning {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -526,6 +550,70 @@
         .auth-loading-content p {
             font-size: 14px;
             color: #666;
+        }
+
+        /* Card Action Buttons */
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .card-action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.15s;
+            background: white;
+            color: #000;
+            text-align: center;
+        }
+
+        .card-action-btn:hover {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .card-action-btn.edit {
+            background: #f57c00;
+            color: white;
+            border-color: #f57c00;
+        }
+
+        .card-action-btn.edit:hover {
+            background: #e65100;
+            border-color: #e65100;
+        }
+
+        .card-action-btn.delete {
+            background: #d32f2f;
+            color: white;
+            border-color: #d32f2f;
+        }
+
+        .card-action-btn.delete:hover {
+            background: #b71c1c;
+            border-color: #b71c1c;
+        }
+
+        .card-action-btn:disabled {
+            background: #f5f5f5;
+            color: #ccc;
+            cursor: not-allowed;
+            border-color: #e0e0e0;
+        }
+
+        .card-action-btn:disabled:hover {
+            background: #f5f5f5;
+            color: #ccc;
+            border-color: #e0e0e0;
         }
     </style>
 </head>
@@ -683,10 +771,11 @@
 <div id="requestVehicleModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Request Vehicle Registration</h3>
+            <h3 id="vehicleModalTitle">Request Vehicle Registration</h3>
             <span class="close-btn" onclick="closeRequestVehicleModal()">&times;</span>
         </div>
         <form id="requestVehicleForm">
+            <input type="hidden" id="editRequestId">
             <div class="form-group">
                 <label>Registration Number *</label>
                 <input type="text" id="reqRegNumber" required>
@@ -713,7 +802,7 @@
                 </select>
             </div>
             <div class="modal-actions">
-                <button type="submit" class="btn btn-primary">Submit Request</button>
+                <button type="submit" class="btn btn-primary" id="vehicleSubmitBtn">Submit Request</button>
                 <button type="button" class="btn btn-secondary" onclick="closeRequestVehicleModal()">Cancel</button>
             </div>
         </form>
@@ -724,10 +813,11 @@
 <div id="requestPolicyModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Request Policy Creation</h3>
+            <h3 id="policyModalTitle">Request Policy Creation</h3>
             <span class="close-btn" onclick="closeRequestPolicyModal()">&times;</span>
         </div>
         <form id="requestPolicyForm">
+            <input type="hidden" id="editPolicyRequestId">
             <div class="form-group">
                 <label>Select Vehicle *</label>
                 <select id="reqPolicyVehicle" required>
@@ -747,7 +837,7 @@
                 <input type="date" id="reqEndDate" required>
             </div>
             <div class="modal-actions">
-                <button type="submit" class="btn btn-primary">Submit Request</button>
+                <button type="submit" class="btn btn-primary" id="policySubmitBtn">Submit Request</button>
                 <button type="button" class="btn btn-secondary" onclick="closeRequestPolicyModal()">Cancel</button>
             </div>
         </form>
@@ -820,6 +910,7 @@
 let currentCustomer = null;
 let pendingClaimData = null;
 let selectedPolicyCoverage = 0;
+let allRequests = []; // Store all requests for editing
 
 // Check authentication on page load
 window.onload = async () => {
@@ -1054,6 +1145,7 @@ async function loadMyRequests() {
     try {
         const response = await fetch(`${API_BASE_URL}/approvals/customer/${currentCustomer.customerId}`);
         const requests = await response.json();
+        allRequests = requests; // Store for editing
 
         const container = document.getElementById('requestsGrid');
 
@@ -1071,6 +1163,7 @@ async function loadMyRequests() {
             const data = JSON.parse(request.requestData);
             const typeIcon = request.requestType === 'VEHICLE_REGISTRATION' ? '🚗' : '📋';
             const statusClass = request.status.toLowerCase();
+            const isPending = request.status === 'PENDING';
 
             return `
                 <div class="request-card">
@@ -1116,6 +1209,16 @@ async function loadMyRequests() {
                             </div>
                         ` : ''}
                     </div>
+                    ${isPending ? `
+                        <div class="card-actions">
+                            <button class="card-action-btn edit" onclick="editRequest(${request.requestId})">
+                                ✏️ Edit
+                            </button>
+                            <button class="card-action-btn delete" onclick="deleteRequest(${request.requestId})">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }).join('');
@@ -1136,19 +1239,113 @@ function loadProfile() {
     document.getElementById('profileInitial').textContent = initial;
 }
 
+// Edit Request Function
+function editRequest(requestId) {
+    const request = allRequests.find(r => r.requestId === requestId);
+
+    if (!request) {
+        alert('Request not found');
+        return;
+    }
+
+    if (request.status !== 'PENDING') {
+        alert('Only pending requests can be edited');
+        return;
+    }
+
+    const data = JSON.parse(request.requestData);
+
+    if (request.requestType === 'VEHICLE_REGISTRATION') {
+        // Edit vehicle request
+        document.getElementById('vehicleModalTitle').textContent = 'Edit Vehicle Request';
+        document.getElementById('editRequestId').value = requestId;
+        document.getElementById('reqRegNumber').value = data.registrationNumber;
+        document.getElementById('reqMake').value = data.make;
+        document.getElementById('reqModel').value = data.model;
+        document.getElementById('reqYear').value = data.yearOfManufacture;
+        document.getElementById('reqVehicleType').value = data.vehicleType;
+        document.getElementById('vehicleSubmitBtn').textContent = 'Update Request';
+
+        document.getElementById('requestVehicleModal').classList.add('active');
+    } else {
+        // Edit policy request
+        document.getElementById('policyModalTitle').textContent = 'Edit Policy Request';
+        document.getElementById('editPolicyRequestId').value = requestId;
+
+        // Load vehicles first, then set the value
+        loadVehiclesForPolicyRequest().then(() => {
+            document.getElementById('reqPolicyVehicle').value = data.vehicleId;
+            document.getElementById('reqCoverage').value = data.coverageAmount;
+            document.getElementById('reqStartDate').value = data.startDate;
+            document.getElementById('reqEndDate').value = data.endDate;
+            document.getElementById('policySubmitBtn').textContent = 'Update Request';
+
+            document.getElementById('requestPolicyModal').classList.add('active');
+        });
+    }
+}
+
+// Delete Request Function
+async function deleteRequest(requestId) {
+    const request = allRequests.find(r => r.requestId === requestId);
+
+    if (!request) {
+        alert('Request not found');
+        return;
+    }
+
+    if (request.status !== 'PENDING') {
+        alert('Only pending requests can be deleted');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete this request?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/approvals/delete/${requestId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showAlert('requestAlert', 'Request deleted successfully!', 'success');
+            loadMyRequests();
+            loadOverview();
+        } else {
+            const error = await response.json().catch(() => ({ error: 'Failed to delete request' }));
+            showAlert('requestAlert', 'Error: ' + (error.error || error.message), 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting request:', error);
+        showAlert('requestAlert', 'Error: ' + error.message, 'error');
+    }
+}
+
 // Request Vehicle Registration
 function requestVehicleRegistration() {
+    // Reset for new request
+    document.getElementById('vehicleModalTitle').textContent = 'Request Vehicle Registration';
+    document.getElementById('editRequestId').value = '';
+    document.getElementById('vehicleSubmitBtn').textContent = 'Submit Request';
+    document.getElementById('requestVehicleForm').reset();
     document.getElementById('requestVehicleModal').classList.add('active');
 }
 
 function closeRequestVehicleModal() {
     document.getElementById('requestVehicleModal').classList.remove('active');
     document.getElementById('requestVehicleForm').reset();
+    document.getElementById('editRequestId').value = '';
+    document.getElementById('vehicleModalTitle').textContent = 'Request Vehicle Registration';
+    document.getElementById('vehicleSubmitBtn').textContent = 'Submit Request';
 }
 
-// Request Vehicle Form Handler
+// Request Vehicle Form Handler (Updated for Edit)
 document.getElementById('requestVehicleForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const editRequestId = document.getElementById('editRequestId').value;
+    const isEditing = !!editRequestId;
 
     const vehicleRequest = {
         registrationNumber: document.getElementById('reqRegNumber').value,
@@ -1159,20 +1356,35 @@ document.getElementById('requestVehicleForm').addEventListener('submit', async (
     };
 
     try {
-        const response = await fetch(`${API_BASE_URL}/approvals/request/vehicle/${currentCustomer.customerId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(vehicleRequest)
-        });
+        let response;
+
+        if (isEditing) {
+            // Update existing request - use specific vehicle endpoint
+            response = await fetch(`${API_BASE_URL}/approvals/update/vehicle/${editRequestId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vehicleRequest)
+            });
+        } else {
+            // Create new request
+            response = await fetch(`${API_BASE_URL}/approvals/request/vehicle/${currentCustomer.customerId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vehicleRequest)
+            });
+        }
 
         if (response.ok) {
-            showAlert('requestAlert', 'Vehicle registration request submitted! Awaiting admin approval.', 'success');
+            const message = isEditing
+                ? 'Vehicle request updated successfully!'
+                : 'Vehicle registration request submitted! Awaiting admin approval.';
+            showAlert('requestAlert', message, 'success');
             closeRequestVehicleModal();
             loadMyRequests();
             loadOverview();
             switchTab('requests');
         } else {
-            const error = await response.json();
+            const error = await response.json().catch(() => ({ error: 'Unknown error' }));
             showAlert('requestAlert', 'Failed: ' + (error.error || 'Unknown error'), 'error');
         }
     } catch (error) {
@@ -1182,44 +1394,62 @@ document.getElementById('requestVehicleForm').addEventListener('submit', async (
 
 // Request Policy Creation
 async function requestPolicyCreation() {
+    // Reset for new request
+    document.getElementById('policyModalTitle').textContent = 'Request Policy Creation';
+    document.getElementById('editPolicyRequestId').value = '';
+    document.getElementById('policySubmitBtn').textContent = 'Submit Request';
+    document.getElementById('requestPolicyForm').reset();
+
+    await loadVehiclesForPolicyRequest();
+
+    const today = new Date();
+    const oneYearLater = new Date(today);
+    oneYearLater.setFullYear(today.getFullYear() + 1);
+
+    document.getElementById('reqStartDate').value = today.toISOString().split('T')[0];
+    document.getElementById('reqEndDate').value = oneYearLater.toISOString().split('T')[0];
+    document.getElementById('reqStartDate').min = today.toISOString().split('T')[0];
+    document.getElementById('reqEndDate').min = today.toISOString().split('T')[0];
+
+    document.getElementById('requestPolicyModal').classList.add('active');
+}
+
+async function loadVehiclesForPolicyRequest() {
     try {
         const response = await fetch(`${API_BASE_URL}/vehicles/customer/${currentCustomer.customerId}`);
         const vehicles = await response.json();
 
         if (vehicles.length === 0) {
             alert('You need to have at least one vehicle registered before requesting a policy. Please request vehicle registration first.');
-            return;
+            return false;
         }
 
         const select = document.getElementById('reqPolicyVehicle');
         select.innerHTML = '<option value="">Choose a vehicle...</option>' +
             vehicles.map(v => `<option value="${v.vehicleId}">${v.make} ${v.model} (${v.registrationNumber})</option>`).join('');
 
-        const today = new Date();
-        const oneYearLater = new Date(today);
-        oneYearLater.setFullYear(today.getFullYear() + 1);
-
-        document.getElementById('reqStartDate').value = today.toISOString().split('T')[0];
-        document.getElementById('reqEndDate').value = oneYearLater.toISOString().split('T')[0];
-
-        document.getElementById('reqStartDate').min = today.toISOString().split('T')[0];
-        document.getElementById('reqEndDate').min = today.toISOString().split('T')[0];
-
-        document.getElementById('requestPolicyModal').classList.add('active');
+        return true;
     } catch (error) {
         console.error('Error loading vehicles:', error);
         alert('Failed to load vehicles. Please try again.');
+        return false;
     }
 }
 
 function closeRequestPolicyModal() {
     document.getElementById('requestPolicyModal').classList.remove('active');
     document.getElementById('requestPolicyForm').reset();
+    document.getElementById('editPolicyRequestId').value = '';
+    document.getElementById('policyModalTitle').textContent = 'Request Policy Creation';
+    document.getElementById('policySubmitBtn').textContent = 'Submit Request';
 }
 
-// Request Policy Form Handler
+// Request Policy Form Handler (Updated for Edit)
 document.getElementById('requestPolicyForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const editRequestId = document.getElementById('editPolicyRequestId').value;
+    const isEditing = !!editRequestId;
 
     const vehicleId = document.getElementById('reqPolicyVehicle').value;
     const coverage = document.getElementById('reqCoverage').value;
@@ -1254,14 +1484,29 @@ document.getElementById('requestPolicyForm').addEventListener('submit', async (e
     };
 
     try {
-        const response = await fetch(`${API_BASE_URL}/approvals/request/policy/${currentCustomer.customerId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(policyRequest)
-        });
+        let response;
+
+        if (isEditing) {
+            // Update existing request - use specific policy endpoint
+            response = await fetch(`${API_BASE_URL}/approvals/update/policy/${editRequestId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(policyRequest)
+            });
+        } else {
+            // Create new request
+            response = await fetch(`${API_BASE_URL}/approvals/request/policy/${currentCustomer.customerId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(policyRequest)
+            });
+        }
 
         if (response.ok) {
-            showAlert('requestAlert', 'Policy creation request submitted! Awaiting admin approval.', 'success');
+            const message = isEditing
+                ? 'Policy request updated successfully!'
+                : 'Policy creation request submitted! Awaiting admin approval.';
+            showAlert('requestAlert', message, 'success');
             closeRequestPolicyModal();
             loadMyRequests();
             loadOverview();
@@ -1431,3 +1676,5 @@ async function downloadMyReport(format = 'pdf') {
     }
 }
 </script>
+</body>
+</html>

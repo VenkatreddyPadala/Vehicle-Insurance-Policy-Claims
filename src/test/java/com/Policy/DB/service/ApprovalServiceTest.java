@@ -535,4 +535,78 @@ class ApprovalServiceTest {
         assertTrue(result.isEmpty());
         verify(approvalRequestRepository, times(1)).findByStatus(RequestStatus.PENDING);
     }
+    @Test
+    void testUpdateRequest_Success() {
+        ApprovalRequest request = new ApprovalRequest();
+        request.setRequestId(1);
+        request.setStatus(RequestStatus.PENDING);
+        request.setRequestType(RequestType.VEHICLE_REGISTRATION);
+
+        VehicleRequestDTO dto = new VehicleRequestDTO();
+        dto.setRegistrationNumber("AP09AB1234");
+        dto.setMake("Honda");
+        dto.setModel("City");
+        dto.setYearOfManufacture(2022);
+        dto.setVehicleType(VehicleType.CAR);
+
+        when(approvalRequestRepository.findById(1))
+                .thenReturn(Optional.of(request));
+        when(approvalRequestRepository.save(any()))
+                .thenAnswer(i -> i.getArgument(0));
+
+        ApprovalRequest updated =
+                approvalService.updateRequest(1, dto);
+
+        assertNotNull(updated);
+        verify(approvalRequestRepository).save(any());
+    }
+    @Test
+    void testUpdateRequest_RequestNotFound() {
+        when(approvalRequestRepository.findById(1))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> approvalService.updateRequest(1, new VehicleRequestDTO()));
+    }
+    @Test
+    void testUpdateRequest_NotPending() {
+        ApprovalRequest request = new ApprovalRequest();
+        request.setStatus(RequestStatus.APPROVED);
+
+        when(approvalRequestRepository.findById(1))
+                .thenReturn(Optional.of(request));
+
+        assertThrows(RuntimeException.class,
+                () -> approvalService.updateRequest(1, new VehicleRequestDTO()));
+    }
+    @Test
+    void testUpdateRequest_WrongType() {
+        ApprovalRequest request = new ApprovalRequest();
+        request.setStatus(RequestStatus.PENDING);
+        request.setRequestType(RequestType.POLICY_CREATION);
+
+        when(approvalRequestRepository.findById(1))
+                .thenReturn(Optional.of(request));
+
+        assertThrows(RuntimeException.class,
+                () -> approvalService.updateRequest(1, new VehicleRequestDTO()));
+    }
+    @Test
+    void testSubmitVehicleRequest_SaveFails() {
+        when(customerRepository.findById(any()))
+                .thenReturn(Optional.of(new Customer()));
+        when(approvalRequestRepository.save(any()))
+                .thenThrow(new RuntimeException("DB down"));
+
+        VehicleRequestDTO dto = new VehicleRequestDTO(
+                "AP09AB1234",
+                "Hyundai",
+                "i20",
+                2023,
+                VehicleType.CAR
+        );
+
+        assertThrows(RuntimeException.class,
+                () -> approvalService.submitVehicleRequest(1, dto));
+    }
 }
