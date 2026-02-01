@@ -1,6 +1,7 @@
 package com.Policy.DB.controller;
 import com.Policy.DB.dto.LoginRequest;
 import com.Policy.DB.dto.LoginResponse;
+import com.Policy.DB.dto.PasswordResetRequest;
 import com.Policy.DB.dto.RegisterRequest;
 import com.Policy.DB.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,21 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequest request) {
+        try {
+            String message = authService.resetPassword(
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getNewPassword()
+            );
+            return ResponseEntity.ok(message);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
         }
     }
 

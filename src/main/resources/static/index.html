@@ -136,6 +136,16 @@
            cursor: not-allowed;
        }
 
+       .btn-secondary {
+           background: #f5f5f5;
+           color: #000;
+           margin-top: 12px;
+       }
+
+       .btn-secondary:hover {
+           background: #e5e5e5;
+       }
+
        .alert {
            padding: 16px 20px;
            border-radius: 6px;
@@ -169,6 +179,37 @@
 
        .footer-links a:hover {
            text-decoration: underline;
+       }
+
+       .forgot-password {
+           text-align: right;
+           margin-top: 8px;
+           margin-bottom: 16px;
+       }
+
+       .forgot-password a {
+           font-size: 13px;
+           color: #666;
+           text-decoration: none;
+           cursor: pointer;
+       }
+
+       .forgot-password a:hover {
+           color: #000;
+           text-decoration: underline;
+       }
+
+       .back-link {
+           display: inline-block;
+           margin-bottom: 20px;
+           font-size: 13px;
+           color: #666;
+           text-decoration: none;
+           cursor: pointer;
+       }
+
+       .back-link:hover {
+           color: #000;
        }
 
        .modal {
@@ -316,82 +357,133 @@
 .success-message.show {
     display: block;
 }
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
     </style>
 </head>
 <body>
 <div class="login-container">
-    <div class="login-header">
-        <h1>Customer Portal</h1>
-        <p>Access your insurance policies</p>
+    <!-- Main Screen (Login/Register) -->
+    <div id="mainScreen" class="screen active">
+        <div class="login-header">
+            <h1>Customer Portal</h1>
+            <p>Access your insurance policies</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Login</button>
+            <button class="tab" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login" class="tab-content active">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter your username" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+
+                <div class="forgot-password">
+                    <a onclick="showForgotPassword()">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn" id="loginBtn">Sign In</button>
+            </form>
+            <div id="loginAlert"></div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register" class="tab-content">
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regName" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="your.email@example.com" required>
+                    <span class="error-message" id="emailError">Please enter a valid email address</span>
+                    <span class="success-message" id="emailSuccess">✓ Valid email</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="regPhone" placeholder="e.g., +1234567890 or 1234567890" required>
+                    <span class="error-message" id="phoneError">Please enter a valid phone number (10)</span>
+                    <span class="success-message" id="phoneSuccess">✓ Valid phone number</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="regAddress" placeholder="Your address" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose a username" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="Choose a strong password" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn" id="registerBtn">Create Account</button>
+            </form>
+            <div id="registerAlert"></div>
+        </div>
+
+        <div class="footer-links">
+            <p>Admin? <a href="/admin/admin-login.html">Login here</a></p>
+        </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab('login')">Login</button>
-        <button class="tab" onclick="switchTab('register')">Register</button>
-    </div>
+    <!-- Forgot Password Screen -->
+    <div id="forgotPasswordScreen" class="screen">
+        <a class="back-link" onclick="showMainScreen()">← Back to Login</a>
 
-    <!-- Login Form -->
-    <div id="login" class="tab-content active">
-        <form id="loginForm">
+        <div class="login-header">
+            <h1>Reset Password</h1>
+            <p>Enter your details to reset your password</p>
+        </div>
+
+        <form id="resetPasswordForm">
             <div class="form-group">
                 <label>Username</label>
-                <input type="text" id="loginUsername" placeholder="Enter your username" required autocomplete="username">
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
-            </div>
-
-            <button type="submit" class="btn" id="loginBtn">Sign In</button>
-        </form>
-        <div id="loginAlert"></div>
-    </div>
-
-    <!-- Register Form -->
-    <div id="register" class="tab-content">
-        <form id="registerForm">
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="regName" placeholder="Enter your full name" required>
+                <input type="text" id="resetUsername" placeholder="Enter your username" required>
             </div>
 
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" id="regEmail" placeholder="your.email@example.com" required>
-                <span class="error-message" id="emailError">Please enter a valid email address</span>
-                <span class="success-message" id="emailSuccess">✓ Valid email</span>
+                <input type="email" id="resetEmail" placeholder="Enter your email" required>
             </div>
 
             <div class="form-group">
-                <label>Phone</label>
-                <input type="tel" id="regPhone" placeholder="e.g., +1234567890 or 1234567890" required>
-                <span class="error-message" id="phoneError">Please enter a valid phone number (10)</span>
-                <span class="success-message" id="phoneSuccess">✓ Valid phone number</span>
+                <label>New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password" required minlength="6">
             </div>
 
             <div class="form-group">
-                <label>Address</label>
-                <input type="text" id="regAddress" placeholder="Your address" required>
+                <label>Confirm New Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password" required minlength="6">
             </div>
 
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="regUsername" placeholder="Choose a username" required>
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="regPassword" placeholder="Choose a strong password" required minlength="6">
-            </div>
-
-            <button type="submit" class="btn" id="registerBtn">Create Account</button>
+            <button type="submit" class="btn" id="resetBtn">Reset Password</button>
+            <button type="button" class="btn btn-secondary" onclick="showMainScreen()">Cancel</button>
         </form>
-        <div id="registerAlert"></div>
-    </div>
-
-    <div class="footer-links">
-        <p>Admin? <a href="/admin/admin-login.html">Login here</a></p>
+        <div id="resetAlert"></div>
     </div>
 </div>
 
@@ -418,6 +510,21 @@
 <script>
     const API_BASE_URL = 'http://localhost:8099';
 
+    // Show/Hide screens
+    function showMainScreen() {
+        document.getElementById('mainScreen').classList.add('active');
+        document.getElementById('forgotPasswordScreen').classList.remove('active');
+        document.getElementById('resetPasswordForm').reset();
+        document.getElementById('resetAlert').innerHTML = '';
+    }
+
+    function showForgotPassword() {
+        document.getElementById('mainScreen').classList.remove('active');
+        document.getElementById('forgotPasswordScreen').classList.add('active');
+        document.getElementById('loginForm').reset();
+        document.getElementById('loginAlert').innerHTML = '';
+    }
+
     function switchTab(tabName) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -426,182 +533,245 @@
         document.getElementById(tabName).classList.add('active');
     }
 
-    // In customer-login.html, update the login form handler
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+    // Login Form Handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const loginBtn = document.getElementById('loginBtn');
-    const alertDiv = document.getElementById('loginAlert');
+        const loginBtn = document.getElementById('loginBtn');
+        const alertDiv = document.getElementById('loginAlert');
 
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
 
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Signing in...';
-    alertDiv.innerHTML = '';
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+        alertDiv.innerHTML = '';
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            if (data.role !== 'CUSTOMER') {
-                alertDiv.innerHTML = '<div class="alert alert-error">This portal is for customers only.</div>';
+            if (response.ok) {
+                if (data.role !== 'CUSTOMER') {
+                    alertDiv.innerHTML = '<div class="alert alert-error">This portal is for customers only.</div>';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    return;
+                }
+
+                // Store authentication data
+                sessionStorage.setItem('token', data.token);
+                sessionStorage.setItem('customerId', data.customerId);
+                sessionStorage.setItem('username', data.username);
+
+                alertDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
+
+                setTimeout(() => {
+                    window.location.href = '/customer/customer-dashboard.html';
+                }, 1000);
+            } else {
+                alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Login failed'}</div>`;
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';
-                return;
             }
-
-            // Store authentication data
-            sessionStorage.setItem('token', data.token);
-            sessionStorage.setItem('customerId', data.customerId);
-            sessionStorage.setItem('username', data.username);
-
-            alertDiv.innerHTML = '<div class="alert alert-success">Login successful! Redirecting...</div>';
-
-            setTimeout(() => {
-                window.location.href = '/customer/customer-dashboard.html';
-            }, 1000);
-        } else {
-            alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Login failed'}</div>`;
+        } catch (error) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
             loginBtn.disabled = false;
             loginBtn.textContent = 'Sign In';
         }
-    } catch (error) {
-        alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Sign In';
-    }
-});
-// Email validation
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-}
+    });
 
-// Phone validation
-function validatePhone(phone) {
-    const phoneRegex = /^[0-9]{10}$/;
-    const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
-    return phoneRegex.test(cleanPhone);
-}
-
-// Email field validation
-document.getElementById('regEmail').addEventListener('blur', function() {
-    const email = this.value;
-    const errorMsg = document.getElementById('emailError');
-    const successMsg = document.getElementById('emailSuccess');
-
-    if (email && !validateEmail(email)) {
-        this.classList.add('error');
-        this.classList.remove('success');
-        errorMsg.classList.add('show');
-        successMsg.classList.remove('show');
-    } else if (email && validateEmail(email)) {
-        this.classList.remove('error');
-        this.classList.add('success');
-        errorMsg.classList.remove('show');
-        successMsg.classList.add('show');
-    } else {
-        this.classList.remove('error', 'success');
-        errorMsg.classList.remove('show');
-        successMsg.classList.remove('show');
-    }
-});
-
-// Phone field validation
-document.getElementById('regPhone').addEventListener('blur', function() {
-    const phone = this.value;
-    const errorMsg = document.getElementById('phoneError');
-    const successMsg = document.getElementById('phoneSuccess');
-
-    if (phone && !validatePhone(phone)) {
-        this.classList.add('error');
-        this.classList.remove('success');
-        errorMsg.classList.add('show');
-        successMsg.classList.remove('show');
-    } else if (phone && validatePhone(phone)) {
-        this.classList.remove('error');
-        this.classList.add('success');
-        errorMsg.classList.remove('show');
-        successMsg.classList.add('show');
-    } else {
-        this.classList.remove('error', 'success');
-        errorMsg.classList.remove('show');
-        successMsg.classList.remove('show');
-    }
-});
-
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const registerBtn = document.getElementById('registerBtn');
-    const alertDiv = document.getElementById('registerAlert');
-
-    // Validate email and phone before submitting
-    const email = document.getElementById('regEmail').value;
-    const phone = document.getElementById('regPhone').value;
-
-    if (!validateEmail(email)) {
-        alertDiv.innerHTML = '<div class="alert alert-error">Please enter a valid email address</div>';
-        return;
+    // Email validation
+    function validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
     }
 
-    if (!validatePhone(phone)) {
-        alertDiv.innerHTML = '<div class="alert alert-error">Please enter a valid phone number (10 digits)</div>';
-        return;
+    // Phone validation
+    function validatePhone(phone) {
+        const phoneRegex = /^[0-9]{10}$/;
+        const cleanPhone = phone.replace(/[\s\-\(\)\.]/g, '');
+        return phoneRegex.test(cleanPhone);
     }
 
-    const requestData = {
-        name: document.getElementById('regName').value,
-        email: email,
-        phone: phone,
-        address: document.getElementById('regAddress').value,
-        username: document.getElementById('regUsername').value,
-        password: document.getElementById('regPassword').value,
-        role: 'CUSTOMER'
-    };
+    // Email field validation
+    document.getElementById('regEmail').addEventListener('blur', function() {
+        const email = this.value;
+        const errorMsg = document.getElementById('emailError');
+        const successMsg = document.getElementById('emailSuccess');
 
-    registerBtn.disabled = true;
-    registerBtn.textContent = 'Creating account...';
-    alertDiv.innerHTML = '';
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestData)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            sessionStorage.setItem('token', data.token);
-            sessionStorage.setItem('customerId', data.customerId);
-            sessionStorage.setItem('username', data.username);
-
-            document.getElementById('displayCustomerId').textContent = data.customerId;
-            document.getElementById('successModal').classList.add('active');
-
-            document.getElementById('continueBtn').onclick = () => {
-                window.location.href = '/customer/customer-dashboard.html';
-            };
+        if (email && !validateEmail(email)) {
+            this.classList.add('error');
+            this.classList.remove('success');
+            errorMsg.classList.add('show');
+            successMsg.classList.remove('show');
+        } else if (email && validateEmail(email)) {
+            this.classList.remove('error');
+            this.classList.add('success');
+            errorMsg.classList.remove('show');
+            successMsg.classList.add('show');
         } else {
-            alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Registration failed'}</div>`;
+            this.classList.remove('error', 'success');
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+        }
+    });
+
+    // Phone field validation
+    document.getElementById('regPhone').addEventListener('blur', function() {
+        const phone = this.value;
+        const errorMsg = document.getElementById('phoneError');
+        const successMsg = document.getElementById('phoneSuccess');
+
+        if (phone && !validatePhone(phone)) {
+            this.classList.add('error');
+            this.classList.remove('success');
+            errorMsg.classList.add('show');
+            successMsg.classList.remove('show');
+        } else if (phone && validatePhone(phone)) {
+            this.classList.remove('error');
+            this.classList.add('success');
+            errorMsg.classList.remove('show');
+            successMsg.classList.add('show');
+        } else {
+            this.classList.remove('error', 'success');
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+        }
+    });
+
+    // Register Form Handler
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const registerBtn = document.getElementById('registerBtn');
+        const alertDiv = document.getElementById('registerAlert');
+
+        // Validate email and phone before submitting
+        const email = document.getElementById('regEmail').value;
+        const phone = document.getElementById('regPhone').value;
+
+        if (!validateEmail(email)) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Please enter a valid email address</div>';
+            return;
+        }
+
+        if (!validatePhone(phone)) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Please enter a valid phone number (10 digits)</div>';
+            return;
+        }
+
+        const requestData = {
+            name: document.getElementById('regName').value,
+            email: email,
+            phone: phone,
+            address: document.getElementById('regAddress').value,
+            username: document.getElementById('regUsername').value,
+            password: document.getElementById('regPassword').value,
+            role: 'CUSTOMER'
+        };
+
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Creating account...';
+        alertDiv.innerHTML = '';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                sessionStorage.setItem('token', data.token);
+                sessionStorage.setItem('customerId', data.customerId);
+                sessionStorage.setItem('username', data.username);
+
+                document.getElementById('displayCustomerId').textContent = data.customerId;
+                document.getElementById('successModal').classList.add('active');
+
+                document.getElementById('continueBtn').onclick = () => {
+                    window.location.href = '/customer/customer-dashboard.html';
+                };
+            } else {
+                alertDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Registration failed'}</div>`;
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+            }
+        } catch (error) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
             registerBtn.disabled = false;
             registerBtn.textContent = 'Create Account';
         }
-    } catch (error) {
-        alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
-        registerBtn.disabled = false;
-        registerBtn.textContent = 'Create Account';
-    }
-});
+    });
+
+    // Reset Password Form Handler
+    document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const resetBtn = document.getElementById('resetBtn');
+        const alertDiv = document.getElementById('resetAlert');
+
+        const username = document.getElementById('resetUsername').value;
+        const email = document.getElementById('resetEmail').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Validate passwords match
+        if (newPassword !== confirmPassword) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Passwords do not match</div>';
+            return;
+        }
+
+        // Validate password length
+        if (newPassword.length < 6) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Password must be at least 6 characters</div>';
+            return;
+        }
+
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Resetting...';
+        alertDiv.innerHTML = '';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    newPassword: newPassword
+                })
+            });
+
+            if (response.ok) {
+                const message = await response.text();
+                alertDiv.innerHTML = '<div class="alert alert-success">' + message + '. Redirecting to login...</div>';
+
+                // Redirect to login after 2 seconds
+                setTimeout(() => {
+                    showMainScreen();
+                    switchTab('login');
+                }, 2000);
+            } else {
+                const error = await response.text();
+                alertDiv.innerHTML = '<div class="alert alert-error">' + error + '</div>';
+                resetBtn.disabled = false;
+                resetBtn.textContent = 'Reset Password';
+            }
+        } catch (error) {
+            alertDiv.innerHTML = '<div class="alert alert-error">Connection error. Please try again.</div>';
+            resetBtn.disabled = false;
+            resetBtn.textContent = 'Reset Password';
+        }
+    });
 </script>
 </body>
 </html>

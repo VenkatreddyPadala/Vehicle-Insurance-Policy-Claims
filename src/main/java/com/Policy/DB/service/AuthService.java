@@ -125,4 +125,26 @@ public class AuthService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    public String resetPassword(String username, String email, String newPassword) {
+        // Find user by username
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Verify email matches
+        if (!user.getEmail().equalsIgnoreCase(email)) {
+            throw new RuntimeException("Username and email do not match");
+        }
+
+        // Validate new password
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new RuntimeException("Password must be at least 6 characters");
+        }
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        return "Password reset successful";
+    }
 }
