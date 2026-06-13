@@ -1,0 +1,37 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [development]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Run Tests
+        run: mvn clean verify
+
+      - name: Build Docker Image
+        run: docker build -t vehicle-insurance-policy-claims .
+
+      - name: Verify Docker Image
+        run: docker images
+      - name: Save Docker Image
+        run: |
+          docker save vehicle-insurance-policy-claims > vehicle-insurance-policy-claims.tar
+
+      - name: Upload Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: vehicle-insurance-policy-claims-image
+          path: vehicle-insurance-policy-claims.tar
